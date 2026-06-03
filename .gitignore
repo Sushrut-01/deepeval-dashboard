@@ -1,0 +1,55 @@
+# ── Eval history data (never commit — may contain proprietary test results) ────
+eval_history/test_run_*.json
+eval_history/bug_reports.json
+eval_history/auth.json
+eval_history/auth_sessions.json
+eval_history/sla_breaches.json
+eval_history/slos.json
+eval_history/annotations.json
+eval_history/queues.json
+eval_history/evaluators.json
+eval_history/automations.json
+eval_history/webhooks.json
+eval_history/prompts.json
+eval_history/sessions.json
+eval_history/feedback.json
+eval_history/datasets.json
+eval_history/score_configs.json
+# Keep folder placeholder
+!eval_history/.gitkeep
+
+# ── Server logs (contain local machine paths) ──────────────────────────────────
+server_out.txt
+server_err.txt
+
+# ── One-off build / debug scripts (not needed by users) ───────────────────────
+patch_*.py
+fix_*.py
+find_*.py
+restore_*.py
+add_*.py
+build_pages.py
+
+# ── Theme preview files (dev-only) ────────────────────────────────────────────
+backend/static/theme*.html
+backend/static/theme-picker.html
+backend/static/gen_themes.py
+backend/static/test.html
+
+# ── Python ─────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# ── Environment (never commit real credentials) ───────────────────────────────
+.env
+.env.local
+
+# ── OS / IDE ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
