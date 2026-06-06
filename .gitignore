@@ -1,0 +1,44 @@
+﻿__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# secrets - NEVER push
+.env
+.env.*
+!.env.example
+auth.json
+auth_sessions.json
+sessions.json
+*.key
+*.pem
+
+# backups
+*.bak
+*.bak_*
+*.py.bak_*
+*.json.bak_*
+
+# run artifacts - DO NOT push (real Foundry responses live here)
+eval_history/test_run_*.json
+eval_history/trace_*.json
+eval_history/bug_reports.json
+eval_history/sla_breaches.json
+eval_history/automations.json
+eval_history/evaluators.json
+eval_history/projects.json
+eval_history/slos.json
+eval_history/auth.json
+eval_history/auth_sessions.json
+eval_history/*.bak_*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

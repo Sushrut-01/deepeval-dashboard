@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DeepEval Dashboard</title>
+<script src="/static/vendor/react.production.min.js"></script>
+<script src="/static/vendor/react-dom.production.min.js"></script>
+<script src="/static/vendor/babel.min.js"></script>
+<script src="/static/vendor/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Inter',sans-serif;background:#1F2937;color:#F9FAFB}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#6366F155;border-radius:10px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade-in{animation:fadeIn .22s ease}
+input,select,textarea,button{font-family:inherit}
+button{cursor:pointer;transition:all .15s}
+table{width:100%;border-collapse:collapse}
+th{padding:8px 13px;font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.09em;text-align:left;white-space:nowrap;border-right:1px solid #374151;border-bottom:2px solid #374151;background:#1a2234}
+th:last-child{border-right:none}
+td{padding:8px 13px;font-size:13px;border-right:1px solid #2D3748;color:#D1D5DB;vertical-align:middle}
+td:last-child{border-right:none}
+tbody tr{border-bottom:1px solid #2D3748;transition:background .1s}
+tbody tr:hover{background:#1e2d45;box-shadow:inset 3px 0 0 #6366F1}
+.scard{background:#111827;border-radius:13px;border:1.5px solid #374151;box-shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2);overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+.scard:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(99,102,241,.18);border-color:#6366F1}
+.shead{padding:11px 18px;border-bottom:1.5px solid #374151;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#1a2234,#111827);flex-shrink:0}
+.stat-wrap{background:#111827;border-radius:13px;flex:1;min-width:140px;border:1.5px solid #374151;overflow:hidden;transition:transform .18s,box-shadow .18s}
+.stat-wrap:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.2)}
+.filter-bar{background:#111827;border:1.5px solid #374151;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.pill-pass{background:rgba(16,185,129,.18);color:#34D399;border:1px solid rgba(52,211,153,.3);display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.pill-fail{background:rgba(248,113,113,.18);color:#F87171;border:1px solid rgba(248,113,113,.3);display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.pill-warn{background:rgba(251,191,36,.18);color:#FCD34D;border:1px solid rgba(252,211,77,.3);display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.pill-info{background:rgba(99,102,241,.2);color:#818CF8;border:1px solid rgba(129,140,248,.3);display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.sev-c{background:rgba(248,113,113,.18);color:#F87171;border:1px solid rgba(248,113,113,.3);padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.sev-w{background:rgba(251,191,36,.18);color:#FCD34D;border:1px solid rgba(252,211,77,.3);padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.tab-bar{display:flex;border-bottom:2px solid #374151;margin-bottom:14px}
+.tab{padding:8px 16px;font-size:13px;font-weight:600;color:#9CA3AF;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab.on{color:#818CF8;border-bottom-color:#6366F1;background:#111827}
+.pg-btn{padding:4px 0;min-width:30px;border-radius:7px;border:1.5px solid #374151;background:#111827;font-size:12px;cursor:pointer;text-align:center;color:#D1D5DB;transition:all .13s}
+.pg-btn.on{border-color:#6366F1;background:rgba(99,102,241,.2);color:#818CF8;font-weight:700}
+.skeleton{background:linear-gradient(90deg,#1F2937 25%,#374151 50%,#1F2937 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal-bx{background:#1F2937;border:1.5px solid #374151;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;min-width:340px;max-width:540px;animation:fadeIn .18s ease}
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.crumb{display:flex;align-items:center;gap:5px;font-size:12px;color:#9CA3AF;margin-bottom:12px}
+
+@media print {
+  .sidebar-nav, .topbar-actions, .filter-bar button, .pg-btn { display:none!important; }
+  body { background:#fff!important; color:#000!important; }
+  .scard { border:1px solid #ccc!important; box-shadow:none!important; break-inside:avoid; }
+  .modal-ov { display:none!important; }
+}
+.crumb span{cursor:pointer}
+.kv{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #2D3748;font-size:12px}
+.kv:last-child{border-bottom:none}
+.kk{color:#9CA3AF;min-width:130px;font-size:11px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="root"><div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#1F2937;flex-direction:column;gap:14px"><div style="width:36px;height:36px;border:3px solid #374151;border-top-color:#6366F1;border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="color:#9CA3AF;font-family:Segoe UI,sans-serif;font-size:14px">Loading DeepEval Dashboard…</div></div></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+const API = "";
+
+/* ─── DESIGN TOKENS (KCRecruit pattern — plain object, no Proxy) ─────────── */
+const C = {
+  bg:"#1F2937", card:"#111827", sidebar:"#111827",
+  primary:"#6366F1", primaryDark:"#4F46E5", primarySoft:"rgba(99,102,241,.18)",
+  primaryGrad:"linear-gradient(135deg,#6366F1,#4F46E5)",
+  teal:"#10B981", tealGrad:"linear-gradient(135deg,#10B981,#059669)", tealSoft:"rgba(16,185,129,.18)",
+  amber:"#F59E0B", amberGrad:"linear-gradient(135deg,#F59E0B,#D97706)", amberSoft:"rgba(245,158,11,.18)",
+  purple:"#A78BFA", purpleGrad:"linear-gradient(135deg,#A78BFA,#818CF8)", purpleSoft:"rgba(167,139,250,.18)",
+  red:"#F87171", redGrad:"linear-gradient(135deg,#F87171,#EF4444)", redSoft:"rgba(248,113,113,.18)",
+  text:"#F9FAFB", textSub:"#D1D5DB", muted:"#9CA3AF",
+  border:"#374151", borderSoft:"#2D3748",
+  topbar:"linear-gradient(180deg,#1F2937,#111827)",
+  sidebarGrad:"linear-gradient(160deg,#111827,#0a0f1a)",
+};
+const AMBER_THEME = {
+  bg:"#FFFBEB", card:"#FFFFFF", sidebar:"#1C1917",
+  primary:"#F59E0B", primaryDark:"#D97706", primarySoft:"#FEF3C7",
+  primaryGrad:"linear-gradient(135deg,#F59E0B,#D97706)",
+  teal:"#10B981", tealGrad:"linear-gradient(135deg,#10B981,#059669)", tealSoft:"#D1FAE5",
+  amber:"#D97706", amberGrad:"linear-gradient(135deg,#D97706,#B45309)", amberSoft:"#FEF3C7",
+  purple:"#7c3aed", purpleGrad:"linear-gradient(135deg,#7c3aed,#6d28d9)", purpleSoft:"#f5f3ff",
+  red:"#DC2626", redGrad:"linear-gradient(135deg,#DC2626,#B91C1C)", redSoft:"#fee2e2",
+  text:"#1C1917", textSub:"#44403C", muted:"#78716C",
+  border:"#FDE68A", borderSoft:"#FEF3C7",
+  topbar:"linear-gradient(180deg,#FFFBEB,#FEF3C7)",
+  sidebarGrad:"linear-gradient(160deg,#1C1917,#0c0a09)",
+};
+
+let _themeId = localStorage.getItem("de_theme") || "dark";
+let _themeForceUpdate = null;
+function switchTheme(id) {
+  _themeId = id;
+  localStorage.setItem("de_theme", id);
+  const src = id === "amber" ? AMBER_THEME : {};
+  if (id === "amber") { Object.assign(C, AMBER_THEME); } else {
+    C.bg="#1F2937"; C.card="#111827"; C.sidebar="#111827";
+    C.primary="#6366F1"; C.primaryDark="#4F46E5"; C.primarySoft="rgba(99,102,241,.18)";
+    C.primaryGrad="linear-gradient(135deg,#6366F1,#4F46E5)";
+    C.teal="#10B981"; C.tealGrad="linear-gradient(135deg,#10B981,#059669)"; C.tealSoft="rgba(16,185,129,.18)";
+    C.amber="#F59E0B"; C.amberGrad="linear-gradient(135deg,#F59E0B,#D97706)"; C.amberSoft="rgba(245,158,11,.18)";
+    C.purple="#A78BFA"; C.purpleGrad="linear-gradient(135deg,#A78BFA,#818CF8)"; C.purpleSoft="rgba(167,139,250,.18)";
+    C.red="#F87171"; C.redGrad="linear-gradient(135deg,#F87171,#EF4444)"; C.redSoft="rgba(248,113,113,.18)";
+    C.text="#F9FAFB"; C.textSub="#D1D5DB"; C.muted="#9CA3AF";
+    C.border="#374151"; C.borderSoft="#2D3748";
+    C.topbar="linear-gradient(180deg,#1F2937,#111827)";
+    C.sidebarGrad="linear-gradient(160deg,#111827,#0a0f1a)";
+  }
+  document.body.style.background = C.bg;
+  document.body.style.color = C.text;
+  if (_themeForceUpdate) _themeForceUpdate(id);
+}
+(function(){ document.body.style.background=C.bg; document.body.style.color=C.text; })();
+
+/* ─── AUTH ───────────────────────────────────────────────────────────────── */
+const getToken = () => localStorage.getItem("de_tok") || "";
+const setTok   = t => localStorage.setItem("de_tok", t);
+const clearTok = () => { localStorage.removeItem("de_tok"); localStorage.removeItem("de_usr"); };
+const authFetch = async (url, opts) => {
+  opts = opts || {};
+  var h = Object.assign({}, opts.headers || {});
+  var tok = getToken();
+  if (tok) h["Authorization"] = "Bearer " + tok;
+  var r = await fetch(url, Object.assign({}, opts, { headers: h, credentials: "include" }));
+  if (r.status === 401) { clearTok(); if (window._logout) window._logout(); }
+  return r;
+};
+
+/* ─── API ────────────────────────────────────────────────────────────────── */
+const api = {
+  get: async function(p) {
+    try { var r = await authFetch(API+p); return await r.json(); } catch(e) { return null; }
+  },
+  post: async function(p, b) {
+    try { var r = await authFetch(API+p, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}); return await r.json(); } catch(e) { return {success:false,error:e.message}; }
+  },
+  put: async function(p, b) {
+    try { var r = await authFetch(API+p, {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}); return await r.json(); } catch(e) { return {success:false}; }
+  },
+  del: async function(p) {
+    try { var r = await authFetch(API+p, {method:"DELETE"}); return await r.json(); } catch(e) { return {success:false}; }
+  }
+};
+
+function useFetch(url, deps) {
+  deps = deps || [];
+  var _s = useState(null), data = _s[0], setData = _s[1];
+  var _l = useState(!!url), loading = _l[0], setLoading = _l[1];
+  var reload = useCallback(function() {
+    if (!url) { setLoading(false); return; }
+    setLoading(true);
+    api.get(url).then(function(d) { setData(d); setLoading(false); }).catch(function() { setLoading(false); });
+  }, [url]);
+  useEffect(function() { reload(); }, [url].concat(deps));
+  return { data: data, loading: loading, reload: reload };
+}
+
+/* ─── TOAST ──────────────────────────────────────────────────────────────── */
+var _toastAdd = null;
+function toast(msg, type) {
+  type = type || "ok";
+  if (!_toastAdd) return;
+  var id = Date.now();
+  _toastAdd(function(p) { return p.concat([{id:id,msg:msg,type:type}]); });
+  setTimeout(function() { _toastAdd(function(p) { return p.filter(function(t) { return t.id !== id; }); }); }, 3200);
+}
+function ToastProvider(props) {
+  var _s = useState([]), list = _s[0], setList = _s[1];
+  _toastAdd = setList;
+  var colors = { ok:"rgba(16,185,129,.88)", error:"rgba(248,113,113,.88)", warn:"rgba(245,158,11,.88)" };
+  return React.createElement(React.Fragment, null,
+    props.children,
+    React.createElement("div", {className:"toast-wrap"},
+      list.map(function(i) {
+        return React.createElement("div", {key:i.id, style:{padding:"9px 16px",borderRadius:10,fontSize:13,fontWeight:600,background:colors[i.type]||colors.ok,color:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,.35)",pointerEvents:"all",animation:"fadeIn .2s ease"}}, i.msg);
+      })
+    )
+  );
+}
+
+/* ─── SHARED COMPONENTS ──────────────────────────────────────────────────── */
+function Btn(props) {
+  var v = props.v || "primary";
+  var styles = {
+    primary: {background:C.primaryGrad,color:"#fff",border:"none",boxShadow:"0 2px 10px "+C.primary+"44"},
+    ghost:   {background:C.card,color:C.textSub,border:"1.5px solid "+C.border,boxShadow:"0 1px 3px rgba(0,0,0,.15)"},
+    outline: {background:"transparent",color:C.primary,border:"1.5px solid "+C.primary},
+    success: {background:C.tealGrad,color:"#fff",border:"none"},
+    danger:  {background:C.redGrad,color:"#fff",border:"none"},
+    warn:    {background:C.amberGrad,color:"#fff",border:"none"},
+  };
+  var s = styles[v] || styles.primary;
+  return React.createElement("button", {
+    onClick: props.onClick,
+    disabled: props.disabled,
+    style: Object.assign({}, s, {padding:props.sm?"3px 11px":"6px 15px",borderRadius:8,fontSize:props.sm?11:13,fontWeight:600,display:"inline-flex",alignItems:"center",gap:5,opacity:props.disabled?.5:1}, props.style||{})
+  }, props.children);
+}
+
+function SCard(props) {
+  return React.createElement("div", {className:"scard", style:props.style||{}}, props.children);
+}
+function SHead(props) {
+  return React.createElement("div", {className:"shead"},
+    React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8,fontSize:13,fontWeight:700,color:C.text}},
+      React.createElement("div", {style:{width:3,height:16,background:C.primaryGrad,borderRadius:3,boxShadow:"0 0 6px "+C.primary+"66"}}),
+      props.children
+    ),
+    props.action ? React.createElement("div", null, props.action) : null
+  );
+}
+function StatCard(props) {
+  var grad = props.grad || C.primaryGrad;
+  return React.createElement("div", {className:"stat-wrap fade-in"},
+    React.createElement("div", {style:{height:3,background:grad}}),
+    React.createElement("div", {style:{padding:"12px 14px",position:"relative"}},
+      React.createElement("div", {style:{position:"absolute",right:12,top:10,width:32,height:32,borderRadius:9,background:grad,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,boxShadow:"0 3px 10px rgba(0,0,0,.3)"}}, props.icon||"📊"),
+      React.createElement("div", {style:{fontSize:24,fontWeight:800,color:C.text,letterSpacing:"-.03em"}}, props.value!=null?props.value:"-"),
+      React.createElement("div", {style:{fontSize:11,color:C.textSub,fontWeight:500,marginTop:3}}, props.label),
+      props.sub ? React.createElement("div", {style:{fontSize:10,color:C.muted,marginTop:2}}, props.sub) : null
+    )
+  );
+}
+function Inp(props) {
+  return React.createElement("input", Object.assign({
+    type: props.type||"text",
+    value: props.value,
+    onChange: props.onChange,
+    placeholder: props.placeholder,
+    style: Object.assign({width:"100%",padding:"7px 11px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,background:C.bg,color:C.text,minHeight:34}, props.style||{})
+  }, props.rest||{}));
+}
+function TA(props) {
+  return React.createElement("textarea", {
+    value: props.value,
+    onChange: props.onChange,
+    placeholder: props.placeholder,
+    rows: props.rows||3,
+    style: Object.assign({width:"100%",padding:"7px 11px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,background:C.bg,color:C.text,resize:"vertical",fontFamily:"inherit"}, props.style||{})
+  });
+}
+function Sel(props) {
+  return React.createElement("select", {
+    value: props.value,
+    onChange: props.onChange,
+    style: Object.assign({width:"100%",padding:"6px 10px",border:"1.5px solid "+C.border,borderRadius:8,fontSize:13,background:C.card,color:C.text,minHeight:34}, props.style||{})
+  }, props.children);
+}
+function Lbl(props) {
+  return React.createElement("div", {style:{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}, props.children);
+}
+function Loading(props) {
+  var rows = props.rows || 4;
+  return React.createElement("div", {style:{padding:16,display:"flex",flexDirection:"column",gap:10}},
+    Array.from({length:rows}).map(function(_,i) {
+      return React.createElement("div", {key:i, className:"skeleton", style:{height:30,width:(65+Math.floor(Math.random()*30))+"%"}});
+    })
+  );
+}
+function Empty(props) {
+  return React.createElement("div", {style:{padding:"48px 20px",textAlign:"center"}},
+    React.createElement("div", {style:{fontSize:38,marginBottom:12,opacity:.4}}, props.icon||"📭"),
+    React.createElement("div", {style:{fontSize:14,fontWeight:700,color:C.text,marginBottom:5}}, props.title||"No data"),
+    props.sub ? React.createElement("div", {style:{fontSize:12,color:C.muted,marginBottom:14}}, props.sub) : null,
+    props.action || null
+  );
+}
+function Pages(props) {
+  var n = Math.ceil(props.total/props.limit);
+  if (n<=1) return null;
+  var nums = Array.from({length:Math.min(n,7)},function(_,i){return i+1;});
+  return React.createElement("div", {style:{display:"flex",gap:4,justifyContent:"center",padding:"10px 0"}},
+    React.createElement("button",{className:"pg-btn",disabled:props.page===1,onClick:function(){props.onPage(props.page-1);}}, "‹"),
+    nums.map(function(i) {
+      return React.createElement("button",{key:i,className:"pg-btn"+(props.page===i?" on":""),onClick:function(){props.onPage(i);}},i);
+    }),
+    n>7 ? React.createElement("span",{style:{color:C.muted,fontSize:12,alignSelf:"center"}},"…"+n) : null,
+    React.createElement("button",{className:"pg-btn",disabled:props.page===n,onClick:function(){props.onPage(props.page+1);}}, "›")
+  );
+}
+function ScoreBar(props) {
+  var p = Math.max(0,Math.min(1,props.score||0))*100;
+  var cl = p>=70?"#10B981":p>=50?"#F59E0B":"#F87171";
+  return React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+    React.createElement("div",{style:{flex:1,height:5,background:C.borderSoft,borderRadius:4,overflow:"hidden"}},
+      React.createElement("div",{style:{height:"100%",width:p+"%",background:cl,borderRadius:4}})
+    ),
+    React.createElement("span",{style:{fontSize:11,fontWeight:700,color:cl,minWidth:30}},p.toFixed(0)+"%")
+  );
+}
+function MetPill(props) {
+  return React.createElement("span",{className:props.success?"pill-pass":"pill-fail",style:{gap:3,whiteSpace:"nowrap",fontSize:props.sm?10:11}},
+    (props.success?"✓ ":"✗ ")+props.name+(props.score!=null?" ·"+props.score.toFixed(2):"")
+  );
+}
+function Confirm(props) {
+  if (!props.open) return null;
+  return React.createElement("div",{className:"modal-ov",onClick:props.onCancel},
+    React.createElement("div",{className:"modal-bx",onClick:function(e){e.stopPropagation();},style:{padding:24}},
+      React.createElement("div",{style:{fontSize:15,fontWeight:700,marginBottom:8}},props.title||"Confirm"),
+      React.createElement("div",{style:{fontSize:13,color:C.muted,marginBottom:20}},props.msg),
+      React.createElement("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
+        React.createElement(Btn,{v:"ghost",onClick:props.onCancel},"Cancel"),
+        React.createElement(Btn,{v:props.danger?"danger":"primary",onClick:props.onOk},"Confirm")
+      )
+    )
+  );
+}
+
+/* ─── CHART WRAPPER ──────────────────────────────────────────────────────── */
+function ChartCanvas(props) {
+  var ref = useRef(null);
+  var chartRef = useRef(null);
+  var dataKey = JSON.stringify(props.data);
+  useEffect(function() {
+    if (!ref.current || typeof window.Chart === "undefined") return;
+    if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
+    var defaults = {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:"Segoe UI",size:11},color:"#9CA3AF"}}},
+      scales:{x:{ticks:{color:"#9CA3AF",font:{size:10}},grid:{color:"#374151"}},
+              y:{ticks:{color:"#9CA3AF",font:{size:10}},grid:{color:"#374151"}}}
+    };
+    var merged = mergeDeep(defaults, props.options||{});
+    chartRef.current = new window.Chart(ref.current, {type:props.type, data:props.data, options:merged});
+    return function() { if (chartRef.current) { chartRef.current.destroy(); chartRef.current=null; } };
+  }, [dataKey]);
+  return React.createElement("div",{style:{height:(props.h||200),position:"relative"}},
+    React.createElement("canvas",{ref:ref})
+  );
+}
+function mergeDeep(a,b) {
+  var o = Object.assign({},a);
+  for (var k in b) {
+    if (b[k]&&typeof b[k]==="object"&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==="object") o[k]=mergeDeep(a[k],b[k]);
+    else o[k]=b[k];
+  }
+  return o;
+}
+
+/* ─── TRACE TREE ─────────────────────────────────────────────────────────── */
+var SPAN_COLORS = {llm:"#6366F1",retriever:"#10B981",tool:"#F59E0B",agent:"#A78BFA",base:"#9CA3AF"};
+function buildTree(trace) {
+  if (!trace) return [];
+  var all = [];
+  [["llmSpans","llm"],["retrieverSpans","retriever"],["toolSpans","tool"],["agentSpans","agent"],["baseSpans","base"]].forEach(function(pair) {
+    (trace[pair[0]]||[]).forEach(function(s) { all.push(Object.assign({},s,{_t:s.type||pair[1]})); });
+  });
+  var m = {};
+  all.forEach(function(s) { m[s.uuid] = Object.assign({},s,{ch:[]}); });
+  var roots = [];
+  Object.values(m).forEach(function(s) {
+    if (s.parentUuid&&m[s.parentUuid]) m[s.parentUuid].ch.push(s); else roots.push(s);
+  });
+  return roots.sort(function(a,b){ return (a.startTime||"").localeCompare(b.startTime||""); });
+}
+function durMs(s) {
+  if (!s.startTime||!s.endTime) return null;
+  try { return Math.round(new Date(s.endTime)-new Date(s.startTime)); } catch(e) { return null; }
+}
+function fmtDur(ms) { return ms===null?"—":ms<1000?ms+"ms":((ms/1000).toFixed(2))+"s"; }
+
+function SpanNode(props) {
+  var _o = useState(props.depth<2), open=_o[0], setOpen=_o[1];
+  var s = props.s;
+  var color = SPAN_COLORS[s._t]||"#9CA3AF";
+  var isErr = (s.status||"").toUpperCase()==="ERRORED";
+  var isSel = props.sel&&props.sel.uuid===s.uuid;
+  return React.createElement("div",null,
+    React.createElement("div",{
+      style:{cursor:"pointer",borderRadius:6,padding:"3px 6px",margin:"1px 0",display:"flex",alignItems:"center",gap:5,
+             background:isSel?"rgba(99,102,241,.2)":isErr?"rgba(248,113,113,.12)":"transparent",
+             outline:isSel?"1.5px solid #6366F1":"none",transition:"background .1s",
+             paddingLeft:(props.depth*14+4)+"px"},
+      onClick:function(){props.onSel(s);}
+    },
+      React.createElement("span",{style:{width:14,fontSize:9,color:C.muted,flexShrink:0},onClick:function(e){e.stopPropagation();setOpen(function(o){return !o;});}}, s.ch&&s.ch.length?(open?"▼":"▶"):""),
+      React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:color,flexShrink:0}}),
+      React.createElement("span",{style:{fontSize:9,fontWeight:700,color:color,background:color+"22",padding:"0 4px",borderRadius:3,flexShrink:0}},(s._t||"base").toUpperCase().slice(0,3)),
+      React.createElement("span",{style:{fontSize:12,color:isErr?"#F87171":C.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, s.name||s._t),
+      isErr?React.createElement("span",{style:{fontSize:9,color:"#F87171",fontWeight:700,flexShrink:0}},"ERR"):null,
+      React.createElement("span",{style:{fontSize:10,color:C.muted,flexShrink:0,marginLeft:"auto"}},fmtDur(durMs(s)))
+    ),
+    open&&s.ch&&s.ch.map(function(c) {
+      return React.createElement(SpanNode,{key:c.uuid,s:c,depth:props.depth+1,sel:props.sel,onSel:props.onSel});
+    })
+  );
+}
+function SpanDetail(props) {
+  var s = props.span;
+  if (!s) return React.createElement("div",{style:{padding:20,color:C.muted,fontSize:13}},"Click a span to inspect it.");
+  var color = SPAN_COLORS[s._t]||"#9CA3AF";
+  var dur = durMs(s);
+  var cost = ((s.costPerInputToken||0)*(s.inputTokenCount||0)+(s.costPerOutputToken||0)*(s.outputTokenCount||0));
+  return React.createElement("div",{style:{padding:14,overflow:"auto",height:"100%"}},
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
+      React.createElement("span",{style:{background:color,color:"#fff",padding:"1px 9px",borderRadius:20,fontSize:10,fontWeight:700}},(s._t||"base").toUpperCase()),
+      React.createElement("span",{style:{fontSize:14,fontWeight:700,color:C.text}},s.name||s._t),
+      React.createElement("span",{className:(s.status||"").toUpperCase()==="ERRORED"?"pill-fail":"pill-pass",style:{fontSize:10,marginLeft:"auto"}},s.status||"SUCCESS"),
+      React.createElement("span",{style:{fontSize:11,color:C.muted}},fmtDur(dur))
+    ),
+    (s.metricsData||[]).length>0&&React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}},
+      s.metricsData.map(function(m,i){ return React.createElement(MetPill,{key:i,name:m.name,score:m.score,success:m.success,sm:true}); })
+    ),
+    s._t==="llm"&&(s.model||s.inputTokenCount)&&React.createElement("div",{style:{background:C.bg,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12}},
+      [["Model",s.model],["Provider",s.provider],["In tokens",s.inputTokenCount?s.inputTokenCount.toLocaleString():null],["Out tokens",s.outputTokenCount?s.outputTokenCount.toLocaleString():null],["Cost",cost>0?"$"+cost.toFixed(6):null]].filter(function(r){return r[1];}).map(function(r){
+        return React.createElement("div",{key:r[0],className:"kv"},React.createElement("div",{className:"kk"},r[0]),React.createElement("div",null,""+r[1]));
+      })
+    ),
+    s._t==="retriever"&&(s.embedder||s.topK)&&React.createElement("div",{style:{background:C.bg,border:"1px solid "+C.border,borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12}},
+      [["Embedder",s.embedder],["Top K",s.topK],["Chunk size",s.chunkSize]].filter(function(r){return r[1];}).map(function(r){
+        return React.createElement("div",{key:r[0],className:"kv"},React.createElement("div",{className:"kk"},r[0]),React.createElement("div",null,""+r[1]));
+      })
+    ),
+    s.input!=null&&React.createElement("div",{style:{marginBottom:10}},
+      React.createElement("div",{style:{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}},"Input"),
+      React.createElement("pre",{style:{fontSize:11,whiteSpace:"pre-wrap",background:C.bg,padding:10,borderRadius:7,maxHeight:180,overflow:"auto",color:C.textSub}},
+        typeof s.input==="string"?s.input:JSON.stringify(s.input,null,2)
+      )
+    ),
+    s.output!=null&&React.createElement("div",{style:{marginBottom:10}},
+      React.createElement("div",{style:{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}},"Output"),
+      React.createElement("pre",{style:{fontSize:11,whiteSpace:"pre-wrap",background:C.bg,padding:10,borderRadius:7,maxHeight:180,overflow:"auto",color:C.textSub}},
+        typeof s.output==="string"?s.output:JSON.stringify(s.output,null,2)
+      )
+    ),
+    (s.retrievalContext||[]).length>0&&React.createElement("div",{style:{marginBottom:10}},
+      React.createElement("div",{style:{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}},"Retrieval Context ("+s.retrievalContext.length+" chunks)"),
+      s.retrievalContext.map(function(chunk,i){
+        return React.createElement("div",{key:i,style:{background:C.bg,border:"1px solid "+C.border,borderRadius:6,padding:"6px 10px",marginBottom:5,fontSize:11}},
+          React.createElement("span",{style:{color:C.muted,fontWeight:600,marginRight:6}},"["+i+"] "+chunk.length+"c"),
+          chunk.slice(0,250)+(chunk.length>250?"…":"")
+        );
+      })
+    ),
+    s.error&&React.createElement("div",{style:{background:"rgba(248,113,113,.15)",borderRadius:7,padding:"8px 12px",color:"#F87171",fontSize:12,marginBottom:10}},"Error: "+s.error)
+  );
+}
+function TraceViewer(props) {
+  var _s = useState(null), sel=_s[0], setSel=_s[1];
+  var roots = useMemo(function(){return buildTree(props.trace);}, [JSON.stringify(props.trace)]);
+  if (!props.trace) return React.createElement(Loading,null);
+  if (!roots.length) return React.createElement(Empty,{title:"No spans in trace"});
+  return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"40% 60%",height:480,border:"1px solid "+C.border,borderRadius:10,overflow:"hidden"}},
+    React.createElement("div",{style:{borderRight:"1.5px solid "+C.border,overflow:"auto",padding:6,background:C.card}},
+      React.createElement("div",{style:{fontSize:9,color:C.muted,padding:"3px 6px",fontWeight:700,textTransform:"uppercase",marginBottom:4}},"Span Tree"),
+      roots.map(function(r){ return React.createElement(SpanNode,{key:r.uuid,s:r,depth:0,sel:sel,onSel:setSel}); })
+    ),
+    React.createElement("div",{style:{overflow:"auto",background:C.card}},
+      React.createElement(SpanDetail,{span:sel})
+    )
+  );
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────────────────────── */
+var NAV_GROUPS = [
+  {g:"MAIN",     items:[{id:"dash",lbl:"Dashboard",ic:"⊞"}]},
+  {g:"EVALS",    items:[{id:"runs",lbl:"Test Runs",ic:"▶"},{id:"bugs",lbl:"Bug Dashboard",ic:"🐛"}]},
+  {g:"OBSERVE",  items:[{id:"traces",lbl:"Trace Viewer",ic:"⬡"},{id:"sessions",lbl:"Sessions",ic:"💬"},{id:"users",lbl:"Users",ic:"👤"}]},
+  {g:"ANALYSIS", items:[{id:"metrics",lbl:"Metrics & Trends",ic:"📈"},{id:"latency",lbl:"Latency",ic:"⏱"},{id:"cost",lbl:"Cost & Tokens",ic:"💰"},{id:"usage",lbl:"Usage",ic:"📊"},{id:"compare",lbl:"Compare Runs",ic:"⇄"}]},
+  {g:"EVAL",     items:[{id:"queues",lbl:"Annotation Queues",ic:"📋"},{id:"anns",lbl:"Annotations",ic:"🏷"},{id:"evals",lbl:"Online Evaluators",ic:"⚡"}]},
+  {g:"AUTO",     items:[{id:"autos",lbl:"Rules",ic:"⚙"},{id:"hooks",lbl:"Webhooks",ic:"🔗"}]},
+  {g:"DATA",     items:[{id:"datasets",lbl:"Datasets",ic:"🗂"},{id:"prompts",lbl:"Prompt Hub",ic:"📝"},{id:"playground",lbl:"Playground",ic:"🎮"}]},
+  {g:"OBSERVE",  items:[{id:"sla",lbl:"SLA Dashboard",ic:"📊"},{id:"projects",lbl:"Projects",ic:"🗂"}]},
+  {g:"TOOLS",   items:[{id:"benchmarks",lbl:"Benchmarks",ic:"B"},{id:"customdash",lbl:"Custom Dashboard",ic:"D"}]},
+  {g:"SYSTEM",   items:[{id:"settings",lbl:"Settings",ic:"⚙"}]},
+];
+function Sidebar(props) {
+  return React.createElement("div",{style:{width:218,background:C.sidebar,display:"flex",flexDirection:"column",height:"100vh",flexShrink:0,borderRight:"1px solid rgba(255,255,255,.06)",overflowY:"auto",position:"sticky",top:0}},
+    React.createElement("div",{style:{padding:"17px 14px 12px",background:C.sidebarGrad,flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}},
+      React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"#fff",letterSpacing:"-.02em"}},"DeepEval"),
+      React.createElement("div",{style:{fontSize:9,color:"rgba(255,255,255,.38)",letterSpacing:".14em",textTransform:"uppercase",marginTop:2}},"Local Dashboard")
+    ),
+    React.createElement("nav",{style:{flex:1,padding:"8px 0"}},
+      NAV_GROUPS.map(function(grp,gi) {
+        return React.createElement("div",{key:grp.g},
+          gi>0&&React.createElement("div",{style:{height:1,background:"rgba(255,255,255,.07)",margin:"7px 12px 5px"}}),
+          React.createElement("div",{style:{fontSize:9,color:"rgba(255,255,255,.28)",letterSpacing:".14em",padding:"8px 14px 3px",fontWeight:700,textTransform:"uppercase"}},grp.g),
+          grp.items.map(function(item) {
+            var active = props.active===item.id;
+            return React.createElement("button",{
+              key:item.id, onClick:function(){props.go(item.id);},
+              style:{display:"flex",alignItems:"center",gap:7,padding:"6px 12px",width:"calc(100% - 16px)",background:active?C.primaryGrad:"transparent",border:"none",cursor:"pointer",textAlign:"left",margin:"1px 8px",borderRadius:7,transition:"all .18s"}
+            },
+              React.createElement("span",{style:{fontSize:11,color:active?"#fff":"rgba(255,255,255,.5)",flexShrink:0}},item.ic),
+              React.createElement("span",{style:{fontSize:12,fontWeight:active?700:400,color:active?"#fff":"rgba(255,255,255,.62)"}},item.lbl)
+            );
+          })
+        );
+      })
+    ),
+    React.createElement("div",{style:{padding:"8px 14px",borderTop:"1px solid rgba(255,255,255,.06)",fontSize:10,color:"rgba(255,255,255,.25)",flexShrink:0}},"v1.0.0 · Port 5000")
+  );
+}
+
+/* ─── TOPBAR ─────────────────────────────────────────────────────────────── */
+function Topbar(props) {
+  var otherTheme = _themeId==="dark"?"amber":"dark";
+  var otherLabel = _themeId==="dark"?"🌕 Amber":"🌙 Dark";
+  return React.createElement("div",{style:{height:54,background:C.topbar,borderBottom:"1.5px solid "+C.border,display:"flex",alignItems:"center",padding:"0 22px",gap:10,flexShrink:0,boxShadow:"0 2px 8px rgba(0,0,0,.15)"}},
+    React.createElement("div",{style:{width:3,height:20,background:C.primaryGrad,borderRadius:3,boxShadow:"0 0 8px "+C.primary+"88"}}),
+    React.createElement("div",{style:{flex:1}},
+      React.createElement("div",{style:{fontSize:16,fontWeight:700,color:C.primary,letterSpacing:"-.02em",lineHeight:1.1}},props.title||"Dashboard"),
+      props.sub&&React.createElement("div",{style:{fontSize:10,color:C.muted,marginTop:1}},props.sub)
+    ),
+    React.createElement("div",{style:{display:"flex",gap:7,alignItems:"center"}},
+      props.projs&&props.projs.length>1&&React.createElement("select",{value:props.proj||"all",onChange:function(e){props.setProj(e.target.value);},style:{fontSize:11,height:28,borderRadius:6,padding:"0 7px",background:C.card,border:"1.5px solid "+C.border,color:C.textSub}},
+        React.createElement("option",{value:"all"},"All Projects"),
+        props.projs.map(function(p){return React.createElement("option",{key:p,value:p},p);})
+      ),
+      props.envs&&props.envs.length>1&&React.createElement("select",{value:props.env||"all",onChange:function(e){props.setEnv(e.target.value);},style:{fontSize:11,height:28,borderRadius:6,padding:"0 7px",background:C.card,border:"1.5px solid "+C.border,color:C.textSub}},
+        React.createElement("option",{value:"all"},"All Envs"),
+        props.envs.map(function(e){return React.createElement("option",{key:e,value:e},e);})
+      ),
+      props.vers&&props.vers.length>1&&React.createElement("select",{value:props.ver||"all",onChange:function(e){props.setVer(e.target.value);},style:{fontSize:11,height:28,borderRadius:6,padding:"0 7px",background:C.card,border:"1.5px solid "+C.border,color:C.textSub}},
+        React.createElement("option",{value:"all"},"All Versions"),
+        props.vers.map(function(v){return React.createElement("option",{key:v,value:v},v);})
+      ),
+      React.createElement("button",{onClick:function(){switchTheme(otherTheme);},style:{padding:"4px 11px",borderRadius:8,border:"1.5px solid "+C.border,background:C.card,color:C.textSub,fontSize:12,fontWeight:600,cursor:"pointer"}},otherLabel),
+      props.user&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("span",{style:{fontSize:11,color:C.muted}},props.user.username),
+        React.createElement("button",{onClick:props.onLogout,style:{padding:"3px 9px",borderRadius:7,border:"1.5px solid "+C.border,background:C.card,color:C.muted,fontSize:11,fontWeight:600,cursor:"pointer"}},"Sign out")
+      )
+    )
+  );
+}
+function PW(props) {
+  return React.createElement("div",{style:Object.assign({padding:18,display:"flex",flexDirection:"column",gap:14},props.style||{})},props.children);
+}
+function SR(props) {
+  return React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap"}},props.children);
+}
+
+/* ─── LOGIN PAGE ─────────────────────────────────────────────────────────── */
+function LoginPage(props) {
+  var _u=useState("admin"),user=_u[0],setUser=_u[1];
+  var _p=useState(""),pass=_p[0],setPass=_p[1];
+  var _e=useState(""),err=_e[0],setErr=_e[1];
+  var _b=useState(false),busy=_b[0],setBusy=_b[1];
+  function submit(e) {
+    e.preventDefault();
+    if (!pass) { setErr("Password required"); return; }
+    setBusy(true); setErr("");
+    fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:user,password:pass}),credentials:"include"})
+      .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d};});})
+      .then(function(res){
+        if(res.ok&&res.d.token){setTok(res.d.token);localStorage.setItem("de_usr",JSON.stringify({username:res.d.username,role:res.d.role}));props.onLogin(res.d);}
+        else setErr(res.d.detail||res.d.error||"Invalid credentials");
+        setBusy(false);
+      }).catch(function(){setErr("Cannot connect to server");setBusy(false);});
+  }
+  return React.createElement("div",{style:{display:"flex",height:"100vh",alignItems:"center",justifyContent:"center",background:C.bg}},
+    React.createElement("div",{style:{width:380,background:C.card,borderRadius:16,border:"1.5px solid "+C.border,boxShadow:"0 20px 60px rgba(0,0,0,.4)",overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"28px 32px 20px",background:C.primaryGrad,textAlign:"center"}},
+        React.createElement("div",{style:{fontSize:22,fontWeight:800,color:"#fff",letterSpacing:"-.02em"}},"DeepEval"),
+        React.createElement("div",{style:{fontSize:9,color:"rgba(255,255,255,.55)",letterSpacing:".14em",textTransform:"uppercase",marginTop:3}},"Local Dashboard")
+      ),
+      React.createElement("form",{onSubmit:submit,style:{padding:"28px 32px"}},
+        React.createElement("div",{style:{marginBottom:14}},React.createElement(Lbl,null,"Username"),React.createElement(Inp,{value:user,onChange:function(e){setUser(e.target.value);}})),
+        React.createElement("div",{style:{marginBottom:18}},React.createElement(Lbl,null,"Password"),React.createElement(Inp,{type:"password",value:pass,onChange:function(e){setPass(e.target.value);},placeholder:"Default: admin123"})),
+        err&&React.createElement("div",{style:{background:C.redSoft,color:C.red,borderRadius:8,padding:"8px 12px",fontSize:12,marginBottom:14}},err),
+        React.createElement("button",{type:"submit",disabled:busy,style:{width:"100%",padding:11,borderRadius:10,background:C.primaryGrad,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",opacity:busy?.7:1}},busy?"Signing in…":"Sign In →"),
+        React.createElement("div",{style:{fontSize:11,color:C.muted,textAlign:"center",marginTop:14}},"Default: admin / admin123")
+      )
+    )
+  );
+}
+
+
+/* ─── SLA STATUS BAR (appears on Dashboard homepage) ────────────────────── */
+function SLAStatusBar() {
+  var _c = useFetch("/api/sla/compliance", ["slac2"]), comp = _c.data;
+  if (!comp || !comp.total) return null;
+  var slos = comp.slos || [];
+  var breaching = slos.filter(function(s) { return s.status === "breach"; });
+  var passing   = slos.filter(function(s) { return s.status === "ok"; });
+  var noData    = slos.filter(function(s) { return s.status === "no_data"; });
+  var bgColor   = breaching.length > 0 ? "rgba(248,113,113,.12)" : "rgba(16,185,129,.12)";
+  var borderCol = breaching.length > 0 ? C.red+"55" : C.teal+"55";
+  var textColor = breaching.length > 0 ? C.red : C.teal;
+  var icon      = breaching.length > 0 ? "! " : "OK ";
+  var pct       = comp.compliance != null ? (comp.compliance * 100).toFixed(0) + "%" : "--";
+
+  return React.createElement("div", {
+    style: { background: bgColor, border: "1.5px solid " + borderCol, borderRadius: 10, padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }
+  },
+    React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: textColor } }, icon + " SLA Compliance: " + pct),
+    React.createElement("div", { style: { display: "flex", gap: 8, flex: 1, flexWrap: "wrap" } },
+      slos.slice(0, 6).map(function(s, i) {
+        var sc = s.status === "ok" ? "pill-pass" : s.status === "breach" ? "pill-fail" : "pill-info";
+        return React.createElement("span", { key: i, className: sc, style: { fontSize: 10 } }, s.name + " " + (s.status === "ok" ? "OK" : s.status === "breach" ? "BREACH" : "?"));
+      })
+    ),
+    React.createElement("a", { href: "#", onClick: function(e) { e.preventDefault(); }, style: { fontSize: 11, color: textColor, fontWeight: 600, textDecoration: "none", flexShrink: 0 } }, "View SLA Dashboard →")
+  );
+}
+
+
+/* ─── PROJECT OVERVIEW CARDS (Dashboard bottom section) ─────────────────── */
+function ProjectOverviewCards(props) {
+  var go = props.go;
+  var _d = useFetch("/api/projects", ["projcards"]), projs = _d.data;
+  if (!projs || projs.length <= 1) return null;  // hide if only "default"
+  return React.createElement("div", null,
+    React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10 } }, "Projects Overview"),
+    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 12 } },
+      projs.map(function(p, i) {
+        var color = p.color || C.primary;
+        var pr = p.passRate;
+        var prColor = pr >= 0.8 ? C.teal : pr >= 0.5 ? C.amber : C.red;
+        return React.createElement("div", {
+          key: i, className: "scard",
+          style: { cursor: "pointer", borderTop: "3px solid " + color },
+          onClick: function() { go("runs", { project: p.id }); }
+        },
+          React.createElement("div", { style: { padding: "12px 14px" } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 6 } },
+              React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 } }),
+              React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: C.text } }, p.name || p.id)
+            ),
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted } },
+              React.createElement("span", null, p.runCount + " runs"),
+              React.createElement("span", { style: { fontWeight: 700, color: prColor } }, p.runCount > 0 ? (pr * 100).toFixed(0) + "% pass" : "No runs")
+            ),
+            p.lastRun && React.createElement("div", { style: { fontSize: 10, color: C.muted, marginTop: 4 } }, "Last: " + p.lastRun.slice(0, 10))
+          )
+        );
+      })
+    )
+  );
+}
+
+/* ─── DASHBOARD PAGE ─────────────────────────────────────────────────────── */
+function DashPage(props) {
+  var go=props.go,env=props.env,ver=props.ver;
+  var qs=env&&env!=="all"?"?env="+env:"";
+  var _d=useFetch("/api/dashboard"+qs,["dash",env,ver]),d=_d.data,loading=_d.loading;
+  var _sp=useFetch("/api/dashboard/sparklines",["sp"]),sp=_sp.data;
+  var _pb=useFetch("/api/dashboard/prebuilt",["pb"]),pb=_pb.data;
+  var _r=useFetch("/api/runs?limit=6",["recruns"]),runs=_r.data;
+  if(loading)return React.createElement(PW,null,React.createElement(Loading,null));
+  var dat=d||{};
+  var spData=sp||[];
+  var prChart={labels:spData.map(function(s){return (s.datetime||"").slice(5,16);}),datasets:[{label:"Pass Rate %",data:spData.map(function(s){return +((s.passRate||0)*100).toFixed(1);}),borderColor:C.primary,backgroundColor:C.primarySoft,tension:.4,fill:true,pointRadius:3,pointBackgroundColor:C.primary}]};
+  var costChart={labels:spData.map(function(s){return (s.datetime||"").slice(5,16);}),datasets:[{label:"Cost ($)",data:spData.map(function(s){return +(s.cost||0).toFixed(4);}),borderColor:C.teal,backgroundColor:C.tealSoft,tension:.4,fill:true,pointRadius:3}]};
+  return React.createElement(PW,null,
+    dat.alert&&React.createElement("div",{style:{background:C.redSoft,border:"1.5px solid "+C.red+"55",borderRadius:10,padding:"10px 16px",fontSize:13,fontWeight:600,color:C.red}},"⚠ "+dat.alertMessage),
+    React.createElement(SR,null,
+      React.createElement(StatCard,{label:"Total Runs",value:dat.totalRuns||0,icon:"▶",grad:C.primaryGrad}),
+      React.createElement(StatCard,{label:"Pass Rate",value:dat.totalRuns?((dat.overallPassRate||0)*100).toFixed(1)+"%":"-",icon:"✓",grad:(dat.overallPassRate||0)>=.7?C.tealGrad:C.redGrad}),
+      React.createElement(StatCard,{label:"Eval Cost",value:dat.totalCost?"$"+dat.totalCost.toFixed(4):"-",icon:"💰",grad:C.amberGrad}),
+      React.createElement(StatCard,{label:"Avg Duration",value:dat.avgDuration?dat.avgDuration.toFixed(1)+"s":"-",icon:"⏱",grad:C.purpleGrad}),
+      React.createElement(StatCard,{label:"Error Rate",value:dat.errorRate?((dat.errorRate)*100).toFixed(1)+"%":"-",icon:"⚠",grad:(dat.errorRate||0)>.05?C.redGrad:C.tealGrad}),
+      React.createElement(StatCard,{label:"Total Tokens",value:dat.tokenTotal?dat.tokenTotal.toLocaleString():"-",icon:"🔤",grad:C.primaryGrad})
+    ),
+    React.createElement(SLAStatusBar,null),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      React.createElement(SCard,null,React.createElement(SHead,null,"Pass Rate (Last 10 Runs)"),React.createElement("div",{style:{padding:14}},spData.length?React.createElement(ChartCanvas,{type:"line",data:prChart,h:170,options:{scales:{y:{min:0,max:100,ticks:{callback:function(v){return v+"%";}}}}}}) :React.createElement(Empty,{title:"No run history",icon:"📈"}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Eval Cost (Last 10 Runs)"),React.createElement("div",{style:{padding:14}},spData.length?React.createElement(ChartCanvas,{type:"line",data:costChart,h:170}):React.createElement(Empty,{title:"No cost data",icon:"💰"})))
+    ),
+    pb&&pb.runTypes&&pb.runTypes.length>0&&React.createElement(SCard,null,
+      React.createElement(SHead,null,"Span Type Distribution"),
+      React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"doughnut",h:150,data:{labels:pb.runTypes.map(function(r){return r.type.toUpperCase();}),datasets:[{data:pb.runTypes.map(function(r){return r.count;}),backgroundColor:[C.primary,C.teal,C.amber,C.purple,"#9CA3AF"]}]},options:{scales:{x:{display:false},y:{display:false}}}}))
+    ),
+    React.createElement(SCard,null,
+      React.createElement(SHead,{action:React.createElement(Btn,{sm:true,v:"outline",onClick:function(){go("runs");}},"View All →")},"Recent Test Runs"),
+      React.createElement(RunsTable,{rows:(runs&&runs.data)||[],go:go,compact:true})
+    ),
+    React.createElement(ProjectOverviewCards,{go:go})
+  );
+}
+
+/* ─── RUNS TABLE (shared) ────────────────────────────────────────────────── */
+function RunsTable(props) {
+  var rows=props.rows||[],go=props.go,compact=props.compact,onDel=props.onDel;
+  if(!rows.length)return React.createElement(Empty,{icon:"📭",title:"No runs found",sub:"Set DEEPEVAL_RESULTS_FOLDER and run deepeval test run tests/"});
+  return React.createElement("div",{style:{overflowX:"auto"}},
+    React.createElement("table",null,
+      React.createElement("thead",null,React.createElement("tr",null,
+        React.createElement("th",null,"Timestamp"),React.createElement("th",null,"Env"),React.createElement("th",null,"Version"),
+        React.createElement("th",null,"Passed"),React.createElement("th",null,"Failed"),React.createElement("th",null,"Pass Rate"),
+        !compact&&React.createElement("th",null,"Cost"),!compact&&React.createElement("th",null,"Duration"),
+        React.createElement("th",null,"Actions")
+      )),
+      React.createElement("tbody",null,rows.map(function(r){
+        var pr=r.passRate||0,pc=pr>=.8?"#10B981":pr>=.5?"#F59E0B":"#F87171";
+        return React.createElement("tr",{key:r.filename,style:{cursor:"pointer"},onClick:function(){go("run",{rf:r.filename});}},
+          React.createElement("td",{style:{fontSize:11,color:C.muted}},(r.datetime||"").replace("T"," ").slice(0,16)),
+          React.createElement("td",null,React.createElement("span",{className:"pill-info",style:{fontSize:10}},r.environment||"—")),
+          React.createElement("td",{style:{fontSize:11,color:C.muted,fontFamily:"monospace"}},r.version||"—"),
+          React.createElement("td",{style:{fontWeight:700,color:"#10B981"}},r.testPassed||0),
+          React.createElement("td",{style:{fontWeight:700,color:"#F87171"}},r.testFailed||0),
+          React.createElement("td",null,React.createElement("span",{style:{background:pc+"22",color:pc,border:"1px solid "+pc+"44",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}},(pr*100).toFixed(1)+"%")),
+          !compact&&React.createElement("td",{style:{fontSize:12}},r.evaluationCost?"$"+r.evaluationCost.toFixed(4):"—"),
+          !compact&&React.createElement("td",{style:{fontSize:12}},r.runDuration?r.runDuration.toFixed(1)+"s":"—"),
+          React.createElement("td",{onClick:function(e){e.stopPropagation();}},
+            React.createElement("div",{style:{display:"flex",gap:5}},
+              React.createElement(Btn,{sm:true,v:"outline",onClick:function(){go("run",{rf:r.filename});}},"View"),
+              onDel&&React.createElement(Btn,{sm:true,v:"danger",onClick:function(){onDel(r.filename);}},"✕")
+            )
+          )
+        );
+      }))
+    )
+  );
+}
+
+/* ─── TEST RUNS PAGE ─────────────────────────────────────────────────────── */
+function RunsPage(props) {
+  var go=props.go,env=props.env,ver=props.ver;
+  var _pg=useState(1),pg=_pg[0],setPg=_pg[1];
+  var _s=useState(""),search=_s[0],setSearch=_s[1];
+  var _st=useState("all"),status=_st[0],setStatus=_st[1];
+  var _del=useState(null),del=_del[0],setDel=_del[1];
+  var qs="page="+pg+"&limit=25"+(env&&env!=="all"?"&env="+env:"")+(ver&&ver!=="all"?"&version="+ver:"")+(status!=="all"?"&status="+status:"")+(search?"&search="+search:"");
+  var _d=useFetch("/api/runs?"+qs,["runs",pg,env,ver,status,search]),data=_d.data,loading=_d.loading,reload=_d.reload;
+  function doDelete(f){api.del("/api/runs/"+f).then(function(){toast("Run deleted");reload();setDel(null);});}
+  return React.createElement(PW,null,
+    React.createElement("div",{className:"filter-bar"},
+      React.createElement(Inp,{value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search…",style:{width:200,minHeight:28}}),
+      React.createElement(Sel,{value:status,onChange:function(e){setStatus(e.target.value);},style:{width:120}},
+        React.createElement("option",{value:"all"},"All"),React.createElement("option",{value:"pass"},"Pass"),React.createElement("option",{value:"fail"},"Fail")
+      ),
+      React.createElement("div",{style:{marginLeft:"auto",fontSize:12,color:C.muted}},(data&&data.total||0)+" runs")
+    ),
+    React.createElement(SCard,null,
+      loading?React.createElement(Loading,null):React.createElement(RunsTable,{rows:(data&&data.data)||[],go:go,onDel:function(f){setDel(f);}}),
+      React.createElement(Pages,{page:pg,total:(data&&data.total)||0,limit:25,onPage:setPg})
+    ),
+    React.createElement(Confirm,{open:!!del,title:"Delete Run",msg:"Delete "+del+"? Cannot be undone.",danger:true,onOk:function(){doDelete(del);},onCancel:function(){setDel(null);}})
+  );
+}
+
+/* ─── RUN DETAIL PAGE ────────────────────────────────────────────────────── */
+function RunPage(props) {
+  var go=props.go,rf=props.rf;
+  var _pg=useState(1),cpg=_pg[0],setCpg=_pg[1];
+  var _cs=useState("all"),cStatus=_cs[0],setCStatus=_cs[1];
+  var _ch=useState(""),cSearch=_ch[0],setCSearch=_ch[1];
+  var _ct=useState(""),cTag=_ct[0],setCTag=_ct[1];
+  var _sum=useFetch(rf?"/api/runs/"+rf+"/summary":null,[rf]),sum=_sum.data,loading=_sum.loading;
+  var _bugs=useFetch(rf?"/api/bugs/run/"+rf:null,[rf]),bugs=_bugs.data;
+  var cqs="page="+cpg+"&limit=50&status="+cStatus+(cSearch?"&search="+cSearch:"")+(cTag?"&tag="+cTag:"");
+  var _cases=useFetch(rf?"/api/runs/"+rf+"/cases?"+cqs:null,[rf,cpg,cStatus,cSearch,cTag]),cases=_cases.data,cLoad=_cases.loading;
+  if(!rf)return React.createElement(Empty,{title:"No run selected"});
+  if(loading)return React.createElement(PW,null,React.createElement(Loading,null));
+  var s=sum||{};
+  var critBugs=(bugs&&bugs.bugs||[]).filter(function(b){return b.severity==="critical"&&!b.resolved;});
+  var mScores=s.metricsScores||[];
+  var mChart={labels:mScores.map(function(m){return m.metric;}),datasets:[{label:"Avg Score",data:mScores.map(function(m){return +(m.avg||0).toFixed(3);}),backgroundColor:mScores.map(function(m){return (m.avg||0)>=.7?"rgba(16,185,129,.7)":"rgba(248,113,113,.7)";}),borderRadius:5}]};
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}},
+      React.createElement("div",{className:"crumb",style:{marginBottom:0}},
+        React.createElement("span",{onClick:function(){go("runs");}},"Test Runs"),
+        React.createElement("span",{style:{color:C.muted}}," > "),
+        React.createElement("span",{style:{color:C.text,fontWeight:600}},rf)
+      ),
+      React.createElement("div",{style:{display:"flex",gap:8}},
+        React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){window.open("/api/runs/"+rf+"/export");}},"Export JSON"),
+        React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){window.print();}},"Print / PDF")
+      )
+    ),
+
+    critBugs.length>0&&React.createElement("div",{style:{background:C.redSoft,border:"1.5px solid "+C.red+"55",borderRadius:10,padding:"10px 16px",cursor:"pointer",fontSize:13,fontWeight:600,color:C.red},onClick:function(){go("bugs",{rf:rf});}},"🐛 "+critBugs.length+" critical bug"+(critBugs.length>1?"s":"")+" detected. Click to view →"),
+    React.createElement(SR,null,
+      React.createElement(StatCard,{label:"Passed",value:s.testPassed||0,icon:"✓",grad:C.tealGrad}),
+      React.createElement(StatCard,{label:"Failed",value:s.testFailed||0,icon:"✗",grad:C.redGrad}),
+      React.createElement(StatCard,{label:"Pass Rate",value:((s.passRate||0)*100).toFixed(1)+"%",icon:"%",grad:C.primaryGrad}),
+      React.createElement(StatCard,{label:"Cost",value:s.evaluationCost?"$"+s.evaluationCost.toFixed(4):"—",icon:"💰",grad:C.amberGrad}),
+      React.createElement(StatCard,{label:"Duration",value:s.runDuration?s.runDuration.toFixed(1)+"s":"—",icon:"⏱",grad:C.purpleGrad})
+    ),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      React.createElement(SCard,null,React.createElement(SHead,null,"Metric Scores"),React.createElement("div",{style:{padding:14}},mChart.labels.length?React.createElement(ChartCanvas,{type:"bar",data:mChart,h:170,options:{scales:{y:{min:0,max:1}},plugins:{legend:{display:false}}}}):React.createElement(Empty,{title:"No metrics"}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Run Info"),React.createElement("div",{style:{padding:14}},
+        [["Environment",s.environment],["Version",s.version],["Dataset",s.datasetAlias],["Identifier",s.identifier],["Has Traces",s.hasTraces?"Yes":"No"]].filter(function(r){return r[1];}).map(function(r){
+          return React.createElement("div",{key:r[0],className:"kv"},React.createElement("div",{className:"kk"},r[0]),React.createElement("div",{style:{fontSize:13}},""+r[1]));
+        }),
+        s.hyperparameters&&Object.keys(s.hyperparameters).length>0&&[
+          React.createElement("div",{key:"divider",style:{height:1,background:C.border,margin:"8px 0"}}),
+          React.createElement("div",{key:"lbl",style:{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}},"Hyperparameters"),
+          Object.entries(s.hyperparameters).slice(0,8).map(function(e){
+            return React.createElement("div",{key:e[0],className:"kv"},React.createElement("div",{className:"kk",style:{fontSize:11}},e[0]),React.createElement("div",{style:{fontSize:12}},JSON.stringify(e[1])));
+          })
+        ]
+      ))
+    ),
+    React.createElement(SCard,null,
+      React.createElement(SHead,null,"Test Cases"),
+      React.createElement("div",{className:"filter-bar",style:{margin:"10px 14px 0",marginBottom:0}},
+        React.createElement(Inp,{value:cSearch,onChange:function(e){setCSearch(e.target.value);},placeholder:"Search cases...",style:{width:180,minHeight:28}}),
+        React.createElement(Sel,{value:cStatus,onChange:function(e){setCStatus(e.target.value);},style:{width:90}},
+          React.createElement("option",{value:"all"},"All"),React.createElement("option",{value:"pass"},"Pass"),React.createElement("option",{value:"fail"},"Fail")
+        ),
+        React.createElement(Inp,{value:cTag,onChange:function(e){setCTag(e.target.value);},placeholder:"Filter by tag...",style:{width:140,minHeight:28}}),
+        React.createElement("div",{style:{marginLeft:"auto",fontSize:12,color:C.muted}},(cases&&cases.total||0)+" cases")
+      ),
+      cLoad?React.createElement(Loading,null):React.createElement("div",{style:{overflowX:"auto"}},
+        React.createElement("table",null,
+          React.createElement("thead",null,React.createElement("tr",null,
+            React.createElement("th",null,"Name"),React.createElement("th",null,"Type"),React.createElement("th",null,"Status"),React.createElement("th",null,"Metrics"),React.createElement("th",null,"Tags"),React.createElement("th",null,"Duration"),React.createElement("th",null,"Trace")
+          )),
+          React.createElement("tbody",null,(cases&&cases.data||[]).map(function(tc){
+            return React.createElement("tr",{key:tc.name,style:{cursor:"pointer"},onClick:function(){go("case",{rf:rf,cn:tc.name});}},
+              React.createElement("td",{style:{fontWeight:600,maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tc.name),
+              React.createElement("td",null,React.createElement("span",{className:"pill-info",style:{fontSize:10}},tc.type||"llm")),
+              React.createElement("td",null,React.createElement("span",{className:tc.success?"pill-pass":"pill-fail"},tc.success?"PASS":"FAIL")),
+              React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:3,flexWrap:"wrap"}},(tc.metrics||[]).slice(0,3).map(function(m,i){return React.createElement(MetPill,{key:i,name:m.name,score:m.score,success:m.success,sm:true});}))),
+              React.createElement("td",{style:{fontSize:12,color:C.muted}},tc.runDuration?tc.runDuration.toFixed(2)+"s":"—"),
+              React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:3,flexWrap:"wrap"}},(tc.tags||[]).map(function(tag,ti){return React.createElement("span",{key:ti,className:"pill-info",style:{fontSize:9,padding:"0 5px",cursor:"pointer"}},tag);}))),
+              React.createElement("td",null,tc.hasTrace?"🔍":"—")
+            );
+          }))
+        ),
+        React.createElement(Pages,{page:cpg,total:(cases&&cases.total)||0,limit:50,onPage:setCpg})
+      )
+    )
+  );
+}
+
+/* ─── TEST CASE DETAIL ───────────────────────────────────────────────────── */
+function CasePage(props) {
+  var go=props.go,rf=props.rf,cn=props.cn;
+  var _tc=useFetch(rf&&cn?"/api/runs/"+rf+"/cases/"+encodeURIComponent(cn):null,[rf,cn]),tc=_tc.data,loading=_tc.loading;
+  var _trace=useFetch(tc&&tc.hasTrace?"/api/runs/"+rf+"/cases/"+encodeURIComponent(cn)+"/trace":null,[rf,cn,tc&&tc.hasTrace]),trace=_trace.data;
+  var _tab=useState("overview"),tab=_tab[0],setTab=_tab[1];
+  var _al=useState(""),annLabel=_al[0],setAnnLabel=_al[1];
+  var _an=useState(""),annNote=_an[0],setAnnNote=_an[1];
+  var _ac=useState(""),annCorr=_ac[0],setAnnCorr=_ac[1];
+  if(!rf||!cn)return React.createElement(Empty,{title:"No case selected"});
+  if(loading)return React.createElement(PW,null,React.createElement(Loading,null));
+  if(!tc)return React.createElement(Empty,{title:"Case not found"});
+  function saveAnn(){api.post("/api/annotations",{runFile:rf,caseName:cn,label:annLabel,note:annNote,correctedOutput:annCorr}).then(function(){toast("Saved!");});}
+  var isConv=tc.type==="conversational";
+  var metricsData=tc.metricsData||[];
+  return React.createElement(PW,null,
+    React.createElement("div",{className:"crumb"},
+      React.createElement("span",{onClick:function(){go("runs");}},"Test Runs"),React.createElement("span",{style:{color:C.muted}}," › "),
+      React.createElement("span",{onClick:function(){go("run",{rf:rf});}},rf.slice(0,22)+"…"),React.createElement("span",{style:{color:C.muted}}," › "),
+      React.createElement("span",{style:{color:C.text,fontWeight:600}},cn)
+    ),
+    React.createElement("div",{style:{background:tc.success?C.tealSoft:C.redSoft,border:"1.5px solid "+(tc.success?C.teal:C.red)+"55",borderRadius:10,padding:"10px 16px",display:"flex",alignItems:"center",gap:12}},
+      React.createElement("span",{style:{fontSize:18}},tc.success?"✓":"✗"),
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontWeight:700,color:tc.success?C.teal:C.red,fontSize:15}},cn),
+        React.createElement("div",{style:{fontSize:11,color:tc.success?C.teal:C.red,opacity:.7}},(isConv?"Conversational":"LLM")+" · "+(tc.success?"PASSED":"FAILED"))
+      ),
+      React.createElement("div",{style:{marginLeft:"auto",display:"flex",gap:4,flexWrap:"wrap"}},metricsData.map(function(m,i){return React.createElement(MetPill,{key:i,name:m.name,score:m.score,success:m.success,threshold:m.threshold,sm:true});}))
+    ),
+    React.createElement("div",{className:"tab-bar"},
+      ["overview","metrics","trace","annotate"].map(function(t){return React.createElement("div",{key:t,className:"tab"+(tab===t?" on":""),onClick:function(){setTab(t);},style:{textTransform:"capitalize"}},t);})
+    ),
+    tab==="overview"&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      isConv?React.createElement(SCard,{style:{gridColumn:"1/-1"}},React.createElement(SHead,null,"Conversation"),React.createElement("div",{style:{padding:14,display:"flex",flexDirection:"column",gap:8}},
+        tc.scenario&&React.createElement("div",{style:{padding:"7px 12px",background:C.bg,borderRadius:8,fontSize:12,color:C.muted}},React.createElement("b",null,"Scenario: "),tc.scenario),
+        (tc.turns||[]).map(function(tu,i){
+          return React.createElement("div",{key:i,style:{display:"flex",justifyContent:tu.role==="user"?"flex-end":"flex-start"}},
+            React.createElement("div",{style:{maxWidth:"75%",padding:"7px 12px",borderRadius:12,fontSize:13,background:tu.role==="user"?C.primarySoft:C.card,border:"1px solid "+C.border,borderBottomRightRadius:tu.role==="user"?4:12,borderBottomLeftRadius:tu.role==="user"?12:4}},
+              React.createElement("div",{style:{fontSize:9,fontWeight:700,color:C.muted,marginBottom:2,textTransform:"uppercase"}},tu.role),tu.content
+            )
+          );
+        })
+      )):React.createElement(React.Fragment,null,
+        tc.imagesMapping&&Object.keys(tc.imagesMapping).length>0&&React.createElement(SCard,{style:{gridColumn:"1/-1"}},React.createElement(SHead,null,"Multimodal Images"),React.createElement("div",{style:{padding:12,display:"flex",flexWrap:"wrap",gap:10}},Object.entries(tc.imagesMapping).map(function(entry,i){var k=entry[0],img=entry[1];var src=img&&img.dataBase64?"data:"+(img.mimeType||"image/jpeg")+";base64,"+img.dataBase64:(img&&img.url)||null;return src?React.createElement("div",{key:i,style:{border:"1px solid "+C.border,borderRadius:8,overflow:"hidden",maxWidth:200}},React.createElement("img",{src:src,alt:k,style:{width:"100%",display:"block"}}),React.createElement("div",{style:{padding:"3px 8px",fontSize:10,color:C.muted}},k)):null;}))),React.createElement(SCard,null,React.createElement(SHead,null,"Input"),React.createElement("div",{style:{padding:12}},React.createElement("pre",{style:{fontSize:12,whiteSpace:"pre-wrap",color:C.text,maxHeight:240,overflow:"auto"}},tc.input||"—"))),
+        React.createElement(SCard,null,React.createElement(SHead,null,"Actual Output"),React.createElement("div",{style:{padding:12}},React.createElement("pre",{style:{fontSize:12,whiteSpace:"pre-wrap",color:C.text,maxHeight:240,overflow:"auto"}},tc.actualOutput||"—"))),
+        tc.expectedOutput&&React.createElement(SCard,{style:{gridColumn:"1/-1"}},React.createElement(SHead,null,"Expected Output"),React.createElement("div",{style:{padding:12}},React.createElement("pre",{style:{fontSize:12,whiteSpace:"pre-wrap",color:C.teal,maxHeight:160,overflow:"auto"}},tc.expectedOutput))),
+        (tc.retrievalContext||[]).length>0&&React.createElement(SCard,{style:{gridColumn:"1/-1"}},React.createElement(SHead,null,"Retrieval Context ("+(tc.retrievalContext.length)+" chunks)"),
+          React.createElement("div",{style:{padding:12,display:"flex",flexDirection:"column",gap:7}},tc.retrievalContext.map(function(ch,i){
+            return React.createElement("div",{key:i,style:{background:C.bg,border:"1px solid "+C.border,borderRadius:7,padding:"7px 10px",fontSize:12}},
+              React.createElement("span",{style:{color:C.muted,fontWeight:600,marginRight:6}},"["+i+"] "+ch.length+"c"),ch.slice(0,280)+(ch.length>280?"…":"")
+            );
+          }))
+        )
+      )
+    ),
+    tab==="metrics"&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+      !metricsData.length&&React.createElement(Empty,{title:"No metrics",icon:"📊"}),
+      metricsData.map(function(m,i){
+        return React.createElement(SCard,{key:i},React.createElement("div",{style:{padding:16}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
+            React.createElement("span",{className:m.success?"pill-pass":"pill-fail",style:{padding:"2px 11px",fontSize:12}},m.success?"PASS":"FAIL"),
+            React.createElement("span",{style:{fontSize:15,fontWeight:700,color:C.text}},m.name),
+            React.createElement("span",{style:{fontSize:22,fontWeight:800,color:m.success?C.teal:C.red,marginLeft:"auto"}},m.score!=null?m.score.toFixed(3):"—"),
+            React.createElement("span",{style:{fontSize:12,color:C.muted}},"/ "+m.threshold)
+          ),
+          React.createElement(ScoreBar,{score:m.score||0}),
+          m.reason&&React.createElement("div",{style:{marginTop:10,fontSize:13,color:C.textSub,lineHeight:1.6,background:C.bg,padding:"9px 12px",borderRadius:8}},m.reason),
+          m.error&&React.createElement("div",{style:{marginTop:8,color:C.red,fontSize:12,padding:"7px 11px",background:C.redSoft,borderRadius:6}},"Error: "+m.error),
+          React.createElement("div",{style:{marginTop:7,display:"flex",gap:12,fontSize:11,color:C.muted}},
+            m.evaluationModel&&React.createElement("span",null,"Eval: "+m.evaluationModel),
+            m.evaluationCost&&React.createElement("span",null,"Cost: $"+m.evaluationCost.toFixed(6))
+          ),
+          m.verboseLogs&&React.createElement("details",{style:{marginTop:7}},React.createElement("summary",{style:{fontSize:11,color:C.muted,cursor:"pointer"}},"Verbose logs"),React.createElement("pre",{style:{fontSize:10,marginTop:5,padding:8,background:C.bg,borderRadius:6,overflow:"auto",maxHeight:180,whiteSpace:"pre-wrap"}},m.verboseLogs))
+        ));
+      })
+    ),
+    tab==="trace"&&(tc.hasTrace?React.createElement(SCard,null,React.createElement(SHead,null,"Trace Viewer"),React.createElement("div",{style:{padding:12}},React.createElement(TraceViewer,{trace:trace}))):React.createElement(Empty,{title:"No trace data",sub:"Add @observe decorators to capture traces",icon:"🔍"})),
+    tab==="annotate"&&React.createElement(SCard,null,React.createElement(SHead,null,"Annotate"),React.createElement("div",{style:{padding:16,display:"flex",flexDirection:"column",gap:12}},
+      React.createElement("div",null,React.createElement(Lbl,null,"Label"),React.createElement(Sel,{value:annLabel,onChange:function(e){setAnnLabel(e.target.value);}},
+        React.createElement("option",{value:""},"— select —"),React.createElement("option",{value:"correct"},"✓ Correct"),React.createElement("option",{value:"incorrect"},"✗ Incorrect"),React.createElement("option",{value:"needs_review"},"⚠ Needs Review")
+      )),
+      React.createElement("div",null,React.createElement(Lbl,null,"Corrected Output"),React.createElement(TA,{value:annCorr,onChange:function(e){setAnnCorr(e.target.value);},placeholder:"What should the model have said?"})),
+      React.createElement("div",null,React.createElement(Lbl,null,"Notes"),React.createElement(TA,{value:annNote,onChange:function(e){setAnnNote(e.target.value);},placeholder:"Notes…",rows:2})),
+      React.createElement("div",{style:{display:"flex",gap:8}},
+        React.createElement(Btn,{onClick:saveAnn},"Save Annotation"),
+        React.createElement(Btn,{v:"ghost",onClick:function(){api.post("/api/feedback",{runFile:rf,caseName:cn,type:"thumbs_up"}).then(function(){toast("👍 Saved!");});}},"👍"),
+        React.createElement(Btn,{v:"ghost",onClick:function(){api.post("/api/feedback",{runFile:rf,caseName:cn,type:"thumbs_down"}).then(function(){toast("👎 Saved!");});}},"👎")
+      )
+    ))
+  );
+}
+
+
+/* ─── ANALYTICS PAGES ────────────────────────────────────────────────────── */
+function MetricsPage(props) {
+  var _tr=useFetch("/api/metrics/trends",["mtr",props.env,props.ver]),trends=_tr.data;
+  var _sum=useFetch("/api/metrics/summary",["msum"]),summary=_sum.data;
+  var _sm=useState("all"),selM=_sm[0],setSelM=_sm[1];
+  var allM=[].concat.apply([],(trends||[]).map(function(t){return [t.metric];})).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var COLORS=[C.primary,C.teal,C.amber,C.purple,C.red];
+  var labels=(trends||[]).map(function(t){return (t.datetime||"").slice(5,16);}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+  var mNames=selM==="all"?allM:[selM];
+  function mkDs(key){return {labels:labels,datasets:mNames.map(function(m,i){return {label:m,data:labels.map(function(lb){var r=(trends||[]).find(function(t){return t.metric===m&&(t.datetime||"").slice(5,16)===lb;});return r?+(r[key]||0).toFixed(3):null;}),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+"18",tension:.4,fill:false,pointRadius:3,spanGaps:true};})}}
+  return React.createElement(PW,null,
+    React.createElement("div",{className:"filter-bar"},React.createElement(Sel,{value:selM,onChange:function(e){setSelM(e.target.value);},style:{width:200}},React.createElement("option",{value:"all"},"All Metrics"),allM.map(function(m){return React.createElement("option",{key:m,value:m},m);}))),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      React.createElement(SCard,null,React.createElement(SHead,null,"Avg Score Over Time"),React.createElement("div",{style:{padding:14}},labels.length?React.createElement(ChartCanvas,{type:"line",data:mkDs("avg"),h:190,options:{scales:{y:{min:0,max:1}}}}):React.createElement(Empty,{title:"No data"}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Pass Rate Over Time"),React.createElement("div",{style:{padding:14}},labels.length?React.createElement(ChartCanvas,{type:"line",data:mkDs("passRate"),h:190,options:{scales:{y:{min:0,max:1}}}}):React.createElement(Empty,{title:"No data"})))
+    ),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}},
+      (summary||[]).map(function(m,i){return React.createElement(SCard,{key:i},React.createElement("div",{style:{padding:13}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}},
+          React.createElement("span",{style:{fontSize:13,fontWeight:700,color:C.text}},m.metric),
+          React.createElement("span",{style:{fontSize:10,background:m.trend==="up"?"rgba(16,185,129,.2)":m.trend==="down"?"rgba(248,113,113,.2)":"rgba(99,102,241,.15)",color:m.trend==="up"?C.teal:m.trend==="down"?C.red:C.primary,padding:"1px 8px",borderRadius:20,fontWeight:700}},m.trend==="up"?"Up":m.trend==="down"?"Down":"Stable")
+        ),
+        React.createElement(ScoreBar,{score:m.avg||0}),
+        React.createElement("div",{style:{display:"flex",gap:12,marginTop:7,fontSize:11,color:C.muted}},
+          React.createElement("span",null,"P:",React.createElement("b",null,m.passes)," F:",React.createElement("b",null,m.fails))
+        )
+      ));})
+    )
+  );
+}
+
+function LatencyPage() {
+  var _p=useFetch("/api/latency/percentiles",["lp"]),perc=_p.data;
+  var _s=useFetch("/api/latency/slowest?limit=15",["ls"]),slow=_s.data;
+  var SC={llm:C.primary,retriever:C.teal,tool:C.amber,agent:C.purple,base:C.muted};
+  var types=Object.keys(perc||{});
+  var pChart=types.length?{labels:types.map(function(t){return t.toUpperCase();}),datasets:[{label:"P50",data:types.map(function(t){return perc[t].p50;}),backgroundColor:C.primary+"aa",borderRadius:4},{label:"P95",data:types.map(function(t){return perc[t].p95;}),backgroundColor:C.red+"88",borderRadius:4},{label:"P99",data:types.map(function(t){return perc[t].p99;}),backgroundColor:C.purple+"77",borderRadius:4}]}:null;
+  return React.createElement(PW,null,
+    pChart&&React.createElement(SCard,null,React.createElement(SHead,null,"Latency by Span Type (ms)"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:pChart,h:210}))),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:12}},
+      types.map(function(tp){return React.createElement(SCard,{key:tp},React.createElement("div",{style:{padding:12}},
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:SC[tp]||C.muted,marginBottom:8,textTransform:"uppercase"}},tp),
+        [["P50",perc[tp].p50],["P95",perc[tp].p95],["P99",perc[tp].p99],["Avg",perc[tp].avg],["Count",perc[tp].count]].map(function(row){return React.createElement("div",{key:row[0],className:"kv"},React.createElement("div",{className:"kk"},row[0]),React.createElement("div",{style:{fontWeight:row[0]==="P99"?700:400}},typeof row[1]==="number"&&row[0]!=="Count"?row[1]+"ms":row[1]));})
+      ));}))
+  );
+}
+
+function CostPage() {
+  var _bd=useFetch("/api/cost/breakdown",["cbd"]),bd=_bd.data;
+  var _ct=useFetch("/api/cost/trends",["ctr"]),ct=_ct.data;
+  var _tb=useFetch("/api/tokens/breakdown",["ttb"]),tb=_tb.data;
+  var cTrend=ct&&ct.length?{labels:ct.map(function(r){return (r.datetime||"").slice(5,16);}),datasets:[{label:"Cost ($)",data:ct.map(function(r){return +(r.cost||0).toFixed(5);}),borderColor:C.teal,backgroundColor:C.tealSoft,tension:.4,fill:true,pointRadius:3}]}:null;
+  var mChart=bd&&bd.byModel&&bd.byModel.length?{labels:bd.byModel.map(function(m){return m.model;}),datasets:[{data:bd.byModel.map(function(m){return m.cost;}),backgroundColor:[C.primary,C.teal,C.amber,C.purple,C.red],borderRadius:4}]}:null;
+  var tokChart=tb&&tb.length?{labels:tb.map(function(r){return (r.datetime||"").slice(5,16);}),datasets:[{label:"Input",data:tb.map(function(r){return r.inputTokens;}),backgroundColor:C.primary+"99",stack:"a"},{label:"Output",data:tb.map(function(r){return r.outputTokens;}),backgroundColor:C.teal+"99",stack:"a"}]}:null;
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      React.createElement(SCard,null,React.createElement(SHead,null,"Cost Per Run"),React.createElement("div",{style:{padding:14}},cTrend?React.createElement(ChartCanvas,{type:"line",data:cTrend,h:175}):React.createElement(Empty,{title:"No cost data"}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Cost by Model"),React.createElement("div",{style:{padding:14}},mChart?React.createElement(ChartCanvas,{type:"doughnut",data:mChart,h:175,options:{scales:{x:{display:false},y:{display:false}}}}):React.createElement(Empty,{title:"No model data"})))
+    ),
+    React.createElement(SCard,null,React.createElement(SHead,null,"Token Usage"),React.createElement("div",{style:{padding:14}},tokChart?React.createElement(ChartCanvas,{type:"bar",data:tokChart,h:190}):React.createElement(Empty,{title:"No token data"})))
+  );
+}
+
+function ComparePage() {
+  var _ar=useFetch("/api/runs?limit=50",["compR"]),allRuns=_ar.data;
+  var _sel=useState([]),sel=_sel[0],setSel=_sel[1];
+  var _cq=useState(""),caseQ=_cq[0],setCaseQ=_cq[1];
+  function toggle(f){setSel(function(s){return s.includes(f)?s.filter(function(x){return x!==f;}):s.concat([f]).slice(0,4);});}
+  var _cmp=useFetch(sel.length>=2?"/api/compare?runs="+sel.join(","):null,["cmp"].concat(sel)),cmp=_cmp.data;
+  var _cc=useFetch(sel.length>=2&&caseQ?"/api/compare/cases?runs="+sel.join(",")+"&case="+encodeURIComponent(caseQ):null,["cmpc",caseQ].concat(sel)),cmpC=_cc.data;
+  var COLS=[C.primary,C.teal,C.amber,C.purple];
+  var allM=[];if(cmp){(cmp||[]).forEach(function(r){Object.keys(r.metrics||{}).forEach(function(k){if(allM.indexOf(k)<0)allM.push(k);});});}
+  var cChart=cmp&&cmp.length&&allM.length?{labels:allM,datasets:(cmp||[]).map(function(r,i){return {label:(r.datetime||"").slice(0,10),data:allM.map(function(m){return +(r.metrics&&r.metrics[m]&&r.metrics[m].avg||0).toFixed(3);}),backgroundColor:COLS[i%4]+"99",borderRadius:4};})}:null;
+  return React.createElement(PW,null,
+    React.createElement(SCard,null,React.createElement(SHead,null,"Select Runs to Compare (max 4)"),React.createElement("div",{style:{padding:12,display:"flex",flexWrap:"wrap",gap:7}},
+      (allRuns&&allRuns.data||[]).map(function(r){var s=sel.includes(r.filename);return React.createElement("button",{key:r.filename,onClick:function(){toggle(r.filename);},style:{padding:"4px 11px",borderRadius:7,fontSize:11,fontWeight:600,border:"1.5px solid "+(s?C.primary:C.border),background:s?C.primarySoft:C.card,color:s?C.primary:C.textSub,cursor:"pointer"}},r.filename.slice(9,22)+" ("+(r.passRate*100).toFixed(0)+"%)");})
+    )),
+    cmp&&cmp.length>=2&&React.createElement(React.Fragment,null,
+      React.createElement("div",{style:{display:"flex",gap:12}},cmp.map(function(r,i){return React.createElement(SCard,{key:i,style:{flex:1,borderTop:"4px solid "+COLS[i]}},React.createElement("div",{style:{padding:13}},React.createElement("div",{style:{fontSize:11,color:C.muted,marginBottom:3}},(r.datetime||"").slice(0,16)),React.createElement("div",{style:{fontSize:12,fontWeight:700}},r.filename&&r.filename.slice(9,22)),React.createElement("div",{style:{fontSize:12,marginTop:6}},React.createElement("b",null,(r.passRate*100).toFixed(0)+"%")," pass")));})),
+      cChart&&React.createElement(SCard,null,React.createElement(SHead,null,"Metric Comparison"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:cChart,h:210}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Test Case Diff"),React.createElement("div",{style:{padding:12,display:"flex",gap:10}},React.createElement(Inp,{value:caseQ,onChange:function(e){setCaseQ(e.target.value);},placeholder:"Enter exact test case name..."})),
+        cmpC&&cmpC.length>0&&React.createElement("div",{style:{overflowX:"auto"}},React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Run"),React.createElement("th",null,"Status"),allM.map(function(m){return React.createElement("th",{key:m},m);}))),React.createElement("tbody",null,cmpC.map(function(r,i){return React.createElement("tr",{key:i},React.createElement("td",{style:{fontSize:11,color:C.muted}},(r.datetime||"").slice(0,10)),React.createElement("td",null,React.createElement("span",{className:r.success?"pill-pass":"pill-fail",style:{fontSize:10}},r.success?"PASS":"FAIL")),allM.map(function(m){return React.createElement("td",{key:m,style:{fontWeight:700,color:r.metrics&&r.metrics[m]&&r.metrics[m].success?C.teal:C.red}},r.metrics&&r.metrics[m]&&r.metrics[m].score!=null?r.metrics[m].score.toFixed(3):"--");}));}))))
+      )
+    ),
+    sel.length<2&&React.createElement(Empty,{title:"Select 2+ runs above to compare",icon:"Compare"})
+  );
+}
+
+function SessionsPage() {
+  var _d=useFetch("/api/sessions",["sess"]),data=_d.data,loading=_d.loading;
+  var _sel=useState(null),sel=_sel[0],setSel=_sel[1];
+  var _det=useFetch(sel?"/api/sessions/"+sel:null,["sessd",sel]),det=_det.data,dL=_det.loading;
+  return React.createElement(PW,null,React.createElement("div",{style:{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}},
+    React.createElement(SCard,null,React.createElement(SHead,null,"Sessions / Threads"),
+      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Session ID"),React.createElement("th",null,"User"),React.createElement("th",null,"Traces"),React.createElement("th",null,"Last Active"))),
+      React.createElement("tbody",null,(data||[]).map(function(s,i){return React.createElement("tr",{key:i,style:{cursor:"pointer",background:sel===s.sessionId?C.primarySoft:""},onClick:function(){setSel(s.sessionId);}},
+        React.createElement("td",{style:{fontFamily:"monospace",fontSize:11}},s.sessionId&&s.sessionId.slice(0,20)+"..."),React.createElement("td",{style:{fontSize:12}},s.userId||"--"),React.createElement("td",{style:{fontWeight:700}},s.traceCount),React.createElement("td",{style:{fontSize:11,color:C.muted}},(s.lastActive||"").slice(0,16).replace("T"," ")));})),
+      !loading&&!(data&&data.length)&&React.createElement(Empty,{title:"No sessions",sub:"Sessions grouped by threadId in trace data"})
+    ),
+    sel&&React.createElement(SCard,null,React.createElement(SHead,{action:React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){setSel(null);}},"X")},"Session Detail"),
+      dL?React.createElement(Loading,null):React.createElement("div",{style:{padding:12}},(det&&det.traces||[]).map(function(tr,i){return React.createElement("div",{key:i,style:{padding:"7px 11px",border:"1px solid "+C.border,borderRadius:8,marginBottom:6,fontSize:12}},React.createElement("div",{style:{fontWeight:600}},tr.testCase),React.createElement("div",{style:{color:C.muted,fontSize:11}},(tr.datetime||"").slice(0,16).replace("T"," ")));})))))
+  );
+}
+
+function UsersPage() {
+  var _d=useFetch("/api/users",["users"]),data=_d.data,loading=_d.loading;
+  return React.createElement(PW,null,React.createElement(SCard,null,React.createElement(SHead,null,"Users"),
+    loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"User ID"),React.createElement("th",null,"Traces"),React.createElement("th",null,"Sessions"),React.createElement("th",null,"Cost"),React.createElement("th",null,"Last Seen"))),
+    React.createElement("tbody",null,(data||[]).map(function(u,i){return React.createElement("tr",{key:i},React.createElement("td",{style:{fontWeight:600,fontFamily:"monospace",fontSize:12}},u.userId),React.createElement("td",{style:{fontWeight:700}},u.traceCount),React.createElement("td",null,u.sessionCount),React.createElement("td",{style:{fontSize:12}},u.cost?"$"+u.cost.toFixed(5):"--"),React.createElement("td",{style:{fontSize:11,color:C.muted}},(u.lastSeen||"").slice(0,16).replace("T"," ")));}))),
+    !loading&&!(data&&data.length)&&React.createElement(Empty,{title:"No users",sub:"Add userId to traces"})
+  ));
+}
+
+function UsagePage() {
+  var _d=useFetch("/api/usage/daily",["ud"]),daily=_d.data;
+  var _s=useFetch("/api/usage/summary",["us"]),summ=_s.data;
+  var dc=daily&&daily.length?{labels:daily.map(function(d){return d.date;}),datasets:[{label:"Runs/day",data:daily.map(function(d){return d.runs;}),backgroundColor:C.primary+"aa",borderRadius:4}]}:null;
+  return React.createElement(PW,null,
+    React.createElement(SR,null,
+      React.createElement(StatCard,{label:"Total Runs",value:summ&&summ.totalRuns||0,icon:"=>",grad:C.primaryGrad}),
+      React.createElement(StatCard,{label:"Total Spans",value:summ&&summ.totalSpans?summ.totalSpans.toLocaleString():0,icon:"S",grad:C.tealGrad}),
+      React.createElement(StatCard,{label:"Total Tokens",value:summ&&summ.totalTokens?summ.totalTokens.toLocaleString():0,icon:"T",grad:C.amberGrad}),
+      React.createElement(StatCard,{label:"Total Cost",value:summ&&summ.totalCost?"$"+summ.totalCost.toFixed(4):"--",icon:"$",grad:C.purpleGrad})
+    ),
+    dc&&React.createElement(SCard,null,React.createElement(SHead,null,"Runs Per Day"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:dc,h:190}))),
+    daily&&daily.length>0&&React.createElement(SCard,null,React.createElement(SHead,null,"Activity Heatmap (Last 26 Weeks)"),React.createElement("div",{style:{padding:16,overflowX:"auto"}},React.createElement(ActivityHeatmap,{data:daily})))
+  );
+}
+
+/* ─── BUG DASHBOARD ──────────────────────────────────────────────────────── */
+function BugsPage(props) {
+  var go=props.go,rfProp=props.rf;
+  var _ar=useFetch("/api/runs?limit=30",["brunlist"]),allRuns=_ar.data;
+  var _sum=useFetch("/api/bugs/summary",["bsum"]),sumData=_sum.data;
+  var _sr=useState(rfProp||""),selRun=_sr[0],setSelRun=_sr[1];
+  var _rep=useFetch(selRun?"/api/bugs/run/"+selRun:null,["brep",selRun]),report=_rep.data,rLoad=_rep.loading;
+  var _sb=useState(null),selBug=_sb[0],setSelBug=_sb[1];
+  var _tab=useState("run"),tab=_tab[0],setTab=_tab[1];
+  var bugs=report&&report.bugs||[];
+  var TC={CHUNKING:C.purple,RETRIEVAL:C.teal,LLM_GENERATION:C.primary,PROMPT:C.amber,TOOL:"#F97316",AGENT:C.purple,REGRESSION:C.red,LATENCY:"#0EA5E9",COST:"#84CC16",CONSISTENCY:"#F97316",DATA_QUALITY:C.muted,CONFIG:"#6366F1"};
+  return React.createElement(PW,null,
+    React.createElement("div",{className:"tab-bar"},
+      ["run","summary"].map(function(t){return React.createElement("div",{key:t,className:"tab"+(tab===t?" on":""),onClick:function(){setTab(t);},style:{textTransform:"capitalize"}},t);})
+    ),
+    tab==="summary"&&React.createElement(React.Fragment,null,
+      React.createElement(SR,null,
+        React.createElement(StatCard,{label:"Total Bugs",value:sumData&&sumData.totalBugs||0,icon:"Bug",grad:C.redGrad}),
+        React.createElement(StatCard,{label:"Critical",value:sumData&&sumData.critical||0,icon:"!",grad:C.redGrad}),
+        React.createElement(StatCard,{label:"Warnings",value:sumData&&sumData.warning||0,icon:"?",grad:C.amberGrad}),
+        React.createElement(StatCard,{label:"Info",value:sumData&&sumData.info||0,icon:"i",grad:C.primaryGrad})
+      ),
+      sumData&&sumData.byType&&sumData.byType.length>0&&React.createElement(SCard,null,React.createElement(SHead,null,"Bugs by Category"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",h:200,data:{labels:sumData.byType.map(function(b){return b.type;}),datasets:[{data:sumData.byType.map(function(b){return b.count;}),backgroundColor:sumData.byType.map(function(b){return TC[b.type]||C.muted;}),borderRadius:4}]},options:{plugins:{legend:{display:false}},scripts:{y:{ticks:{precision:0}}}}})))
+    ),
+    tab==="run"&&React.createElement(React.Fragment,null,
+      React.createElement("div",{className:"filter-bar"},
+        React.createElement(Sel,{value:selRun,onChange:function(e){setSelRun(e.target.value);setSelBug(null);},style:{flex:1}},
+          React.createElement("option",{value:""},"-- select a run --"),
+          (allRuns&&allRuns.data||[]).map(function(r){return React.createElement("option",{key:r.filename,value:r.filename},r.filename+" ("+(r.passRate*100).toFixed(0)+"% pass)");})
+        ),
+        selRun&&React.createElement(Btn,{sm:true,v:"outline",onClick:function(){api.post("/api/bugs/analyze/"+selRun,{}).then(function(){alert("Re-analyzed!");});}}, "Re-analyze")
+      ),
+      rLoad&&React.createElement(Loading,null),
+      report&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:selBug?"1fr 1fr":"1fr",gap:14}},
+        React.createElement(SCard,null,React.createElement(SHead,null,report.total+" bugs ("+report.critical+" critical, "+report.warning+" warnings)"),
+          React.createElement("div",{style:{overflowX:"auto"}},React.createElement("table",null,
+            React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"ID"),React.createElement("th",null,"Severity"),React.createElement("th",null,"Type"),React.createElement("th",null,"Test Case"),React.createElement("th",null,"Title"))),
+            React.createElement("tbody",null,bugs.map(function(b,i){return React.createElement("tr",{key:i,style:{cursor:"pointer",background:selBug&&selBug.bugId===b.bugId?C.primarySoft:""},onClick:function(){setSelBug(b);}},
+              React.createElement("td",{style:{fontSize:10,fontWeight:700,color:C.muted}},b.bugId),
+              React.createElement("td",null,React.createElement("span",{className:b.severity==="critical"?"sev-c":"sev-w"},b.severity==="critical"?"CRIT":"WARN")),
+              React.createElement("td",null,React.createElement("span",{style:{fontSize:10,background:(TC[b.type]||C.muted)+"22",color:TC[b.type]||C.muted,padding:"1px 5px",borderRadius:4,fontWeight:700}},b.type&&b.type.slice(0,8))),
+              React.createElement("td",{style:{fontSize:12,maxWidth:150,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},b.testCase||"--"),
+              React.createElement("td",{style:{fontSize:12,maxWidth:260,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},b.title)
+            );}))
+          )),
+          !bugs.length&&React.createElement(Empty,{title:"No bugs detected",icon:"OK"})
+        ),
+        selBug&&React.createElement(SCard,null,React.createElement(SHead,{action:React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){setSelBug(null);}},"X")},"Bug Detail"),
+          React.createElement("div",{style:{padding:14,overflow:"auto",maxHeight:500}},
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.text,marginBottom:12}},selBug.title),
+            React.createElement("div",{style:{background:C.bg,padding:"9px 13px",borderRadius:8,marginBottom:10,fontSize:12}},React.createElement("div",{style:{fontWeight:700,color:C.muted,fontSize:10,marginBottom:4}},"WHY"),selBug.why),
+            React.createElement("div",{style:{background:"rgba(16,185,129,.1)",border:"1px solid rgba(16,185,129,.3)",padding:"9px 13px",borderRadius:8,marginBottom:10,fontSize:12}},React.createElement("div",{style:{fontWeight:700,color:C.teal,fontSize:10,marginBottom:4}},"FIX"),selBug.fix),
+            selBug.evidence&&React.createElement("div",{style:{marginBottom:10}},React.createElement("div",{style:{fontSize:10,fontWeight:700,color:C.muted,marginBottom:4}},"EVIDENCE"),React.createElement("pre",{style:{fontSize:11,background:C.bg,padding:9,borderRadius:6,overflow:"auto",maxHeight:130,whiteSpace:"pre-wrap"}},JSON.stringify(selBug.evidence,null,2))),
+            React.createElement("div",{style:{display:"flex",gap:7}},
+              React.createElement(Btn,{sm:true,onClick:function(){api.post("/api/bugs/run/"+selRun+"/resolve/"+selBug.bugId,{}).then(function(){alert("Resolved!");setSelBug(null);});}}, "Mark Resolved"),
+              selBug.testCase&&React.createElement(Btn,{sm:true,v:"outline",onClick:function(){go("case",{rf:selRun,cn:selBug.testCase});}}, "View Case")
+            )
+          )
+        )
+      ),
+      !selRun&&React.createElement(Empty,{title:"Select a run above",sub:"Bug detector checks 12 categories, 35 specific patterns"})
+    )
+  );
+}
+
+/* ─── TRACES PAGE ────────────────────────────────────────────────────────── */
+function TracesPage(props) {
+  var go=props.go;
+  var _pg=useState(1),pg=_pg[0],setPg=_pg[1];
+  var _s=useState(""),search=_s[0],setSearch=_s[1];
+  var _d=useFetch("/api/traces?page="+pg+"&limit=40"+(search?"&search="+search:""),["traces",pg,search]),data=_d.data,loading=_d.loading;
+  return React.createElement(PW,null,
+    React.createElement("div",{className:"filter-bar"},React.createElement(Inp,{value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search traces...",style:{width:260,minHeight:28}}),React.createElement("div",{style:{marginLeft:"auto",fontSize:12,color:C.muted}},(data&&data.total||0)+" traces")),
+    React.createElement(SCard,null,
+      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Trace Name"),React.createElement("th",null,"Test Case"),React.createElement("th",null,"Run"),React.createElement("th",null,"Status"),React.createElement("th",null,"Spans"),React.createElement("th",null,"Time"))),
+        React.createElement("tbody",null,(data&&data.data||[]).map(function(tr,i){return React.createElement("tr",{key:i,style:{cursor:"pointer"},onClick:function(){go("case",{rf:tr.filename,cn:tr.testCase});}},
+          React.createElement("td",{style:{fontWeight:600}},tr.traceName||"--"),React.createElement("td",{style:{fontSize:12}},tr.testCase),React.createElement("td",{style:{fontSize:11,color:C.muted}},tr.filename&&tr.filename.slice(9,22)),
+          React.createElement("td",null,React.createElement("span",{className:tr.status==="ERRORED"?"pill-fail":"pill-pass",style:{fontSize:10}},tr.status||"SUCCESS")),
+          React.createElement("td",null,tr.spanCount||0),React.createElement("td",{style:{fontSize:11,color:C.muted}},(tr.startTime||"").slice(0,16).replace("T"," ")));
+        }))
+      ),
+      !loading&&!(data&&data.data&&data.data.length)&&React.createElement(Empty,{title:"No traces",sub:"Add @observe decorators to capture traces"}),
+      React.createElement(Pages,{page:pg,total:(data&&data.total)||0,limit:40,onPage:setPg})
+    )
+  );
+}
+
+/* ─── ANNOTATION QUEUES ──────────────────────────────────────────────────── */
+function QueuesPage() {
+  var _q=useFetch("/api/queues",["qs"]),queues=_q.data,loading=_q.loading,reload=_q.reload;
+  var _sc=useState(false),showCreate=_sc[0],setShowCreate=_sc[1];
+  var _fn=useState({name:"",description:""}),form=_fn[0],setForm=_fn[1];
+  var _rev=useState(null),rev=_rev[0],setRev=_rev[1];
+  var _next=useState(null),next=_next[0],setNext=_next[1];
+  var _scores=useState({}),scores=_scores[0],setScores=_scores[1];
+  var _corr=useState(""),corr=_corr[0],setCorr=_corr[1];
+  var _note=useState(""),note=_note[0],setNote=_note[1];
+  function createQ(){if(!form.name){toast("Name required","warn");return;}api.post("/api/queues",form).then(function(){toast("Created!");setShowCreate(false);setForm({name:"",description:""});reload();});}
+  function startRev(qid){api.get("/api/queues/"+qid+"/next").then(function(d){setNext(d);setRev(qid);setScores({});setCorr("");setNote("");});}
+  function submitItem(){if(!next||!next.item)return;api.post("/api/queues/"+rev+"/items/"+next.item.id,{runFile:next.item.runFile,caseName:next.item.caseName,scores:scores,correctedOutput:corr,note:note}).then(function(){toast("Saved!");return api.get("/api/queues/"+rev+"/next");}).then(function(d){setNext(d);setScores({});setCorr("");setNote("");});}
+  if(rev&&next){
+    if(next.done)return React.createElement(PW,null,React.createElement("div",{style:{textAlign:"center",padding:60}},React.createElement("div",{style:{fontSize:18,fontWeight:700,marginBottom:8}},"Queue Complete!"),React.createElement(Btn,{onClick:function(){setRev(null);setNext(null);}},"Back to Queues")));
+    var tc=next.testCase;
+    return React.createElement(PW,null,
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:4}},
+        React.createElement(Btn,{v:"ghost",sm:true,onClick:function(){setRev(null);setNext(null);}},"<- Back"),
+        React.createElement("span",{style:{fontSize:12,color:C.muted}},next.remaining+" of "+next.total+" remaining"),
+        React.createElement("div",{style:{flex:1,height:5,background:C.border,borderRadius:4}},React.createElement("div",{style:{height:"100%",width:(100-next.remaining/next.total*100)+"%",background:C.primaryGrad,borderRadius:4}}))
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+        React.createElement(SCard,null,React.createElement(SHead,null,next.item&&next.item.caseName),React.createElement("div",{style:{padding:12}},
+          tc&&React.createElement(React.Fragment,null,
+            React.createElement("div",{style:{marginBottom:10}},React.createElement(Lbl,null,"Input"),React.createElement("pre",{style:{fontSize:12,whiteSpace:"pre-wrap",background:C.bg,padding:9,borderRadius:7,maxHeight:160,overflow:"auto"}},tc.input||"--")),
+            React.createElement("div",{style:{marginBottom:10}},React.createElement(Lbl,null,"Actual Output"),React.createElement("pre",{style:{fontSize:12,whiteSpace:"pre-wrap",background:C.bg,padding:9,borderRadius:7,maxHeight:160,overflow:"auto"}},tc.actualOutput||"--")),
+            React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},(tc.metricsData||[]).map(function(m,i){return React.createElement(MetPill,{key:i,name:m.name,score:m.score,success:m.success,sm:true});}))
+          )
+        )),
+        React.createElement(SCard,null,React.createElement(SHead,null,"Your Annotation"),React.createElement("div",{style:{padding:12,display:"flex",flexDirection:"column",gap:10}},
+          React.createElement("div",null,React.createElement(Lbl,null,"Label"),React.createElement(Sel,{value:scores.__lbl||"",onChange:function(e){setScores(function(s){return Object.assign({},s,{__lbl:e.target.value});});}},React.createElement("option",{value:""},"--"),React.createElement("option",{value:"correct"},"Correct"),React.createElement("option",{value:"incorrect"},"Incorrect"),React.createElement("option",{value:"needs_review"},"Needs Review"))),
+          React.createElement("div",null,React.createElement(Lbl,null,"Corrected Output"),React.createElement(TA,{value:corr,onChange:function(e){setCorr(e.target.value);},rows:3})),
+          React.createElement("div",null,React.createElement(Lbl,null,"Notes"),React.createElement(TA,{value:note,onChange:function(e){setNote(e.target.value);},rows:2})),
+          React.createElement("div",{style:{display:"flex",gap:7}},React.createElement(Btn,{onClick:submitItem,style:{flex:1}},"Complete + Next"),React.createElement(Btn,{v:"ghost",onClick:function(){api.get("/api/queues/"+rev+"/next").then(setNext);}},"Skip"))
+        ))
+      )
+    );
+  }
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},React.createElement(Btn,{onClick:function(){setShowCreate(function(s){return !s;});}},showCreate?"Cancel":"+ New Queue")),
+    showCreate&&React.createElement(SCard,null,React.createElement(SHead,null,"Create Queue"),React.createElement("div",{style:{padding:14,display:"flex",flexDirection:"column",gap:10}},
+      React.createElement("div",null,React.createElement(Lbl,null,"Queue Name"),React.createElement(Inp,{value:form.name,onChange:function(e){setForm(function(f){return Object.assign({},f,{name:e.target.value});});}})),
+      React.createElement("div",null,React.createElement(Lbl,null,"Description"),React.createElement(Inp,{value:form.description,onChange:function(e){setForm(function(f){return Object.assign({},f,{description:e.target.value});});}})),
+      React.createElement(Btn,{onClick:createQ},"Create Queue")
+    )),
+    React.createElement(SCard,null,React.createElement(SHead,null,"Queues"),
+      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Name"),React.createElement("th",null,"Items"),React.createElement("th",null,"Reviewed"),React.createElement("th",null,"Progress"),React.createElement("th",null,"Actions"))),
+        React.createElement("tbody",null,(queues||[]).map(function(q,i){var pct=q.itemCount>0?Math.round(q.reviewedCount/q.itemCount*100):0;return React.createElement("tr",{key:i},
+          React.createElement("td",{style:{fontWeight:700}},q.name),React.createElement("td",null,q.itemCount||0),React.createElement("td",null,q.reviewedCount||0),
+          React.createElement("td",{style:{minWidth:100}},React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},React.createElement("div",{style:{flex:1,height:5,background:C.border,borderRadius:4}},React.createElement("div",{style:{height:"100%",width:pct+"%",background:C.primaryGrad,borderRadius:4}})),React.createElement("span",{style:{fontSize:11,color:C.muted}},pct+"%"))),
+          React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:5}},React.createElement(Btn,{sm:true,onClick:function(){startRev(q.id);}},"Review"),React.createElement(Btn,{sm:true,v:"danger",onClick:function(){api.del("/api/queues/"+q.id).then(function(){reload();});}},"X")))
+        );}))
+      ),
+      !loading&&!(queues&&queues.length)&&React.createElement(Empty,{title:"No queues"})
+    )
+  );
+}
+
+/* ─── ANNOTATIONS PAGE ───────────────────────────────────────────────────── */
+function AnnsPage() {
+  var _d=useFetch("/api/annotations",["anns"]),data=_d.data,loading=_d.loading;
+  var _st=useFetch("/api/annotations/stats",["anst"]),stats=_st.data;
+  var _l=useState("all"),lbl=_l[0],setLbl=_l[1];
+  var rows=(data||[]).filter(function(a){return lbl==="all"||a.label===lbl;});
+  return React.createElement(PW,null,
+    React.createElement(SR,null,
+      React.createElement(StatCard,{label:"Annotated",value:stats&&stats.annotated||0,icon:"Tag",grad:C.primaryGrad}),
+      React.createElement(StatCard,{label:"Correct",value:stats&&stats.correct||0,icon:"OK",grad:C.tealGrad}),
+      React.createElement(StatCard,{label:"Incorrect",value:stats&&stats.incorrect||0,icon:"X",grad:C.redGrad}),
+      React.createElement(StatCard,{label:"Needs Review",value:stats&&stats.needsReview||0,icon:"?",grad:C.amberGrad})
+    ),
+    React.createElement("div",{className:"filter-bar"},
+      React.createElement(Sel,{value:lbl,onChange:function(e){setLbl(e.target.value);},style:{width:150}},React.createElement("option",{value:"all"},"All Labels"),React.createElement("option",{value:"correct"},"Correct"),React.createElement("option",{value:"incorrect"},"Incorrect"),React.createElement("option",{value:"needs_review"},"Needs Review")),
+      React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){window.open("/api/annotations/export/csv");}},"Export CSV")
+    ),
+    React.createElement(SCard,null,
+      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Test Case"),React.createElement("th",null,"Run"),React.createElement("th",null,"Label"),React.createElement("th",null,"Note"),React.createElement("th",null,"Date"))),
+        React.createElement("tbody",null,rows.map(function(a,i){return React.createElement("tr",{key:i},
+          React.createElement("td",{style:{fontWeight:600,fontSize:12}},a.caseName),
+          React.createElement("td",{style:{fontSize:11,color:C.muted}},a.runFile&&a.runFile.slice(9,20)),
+          React.createElement("td",null,a.label&&React.createElement("span",{className:a.label==="correct"?"pill-pass":a.label==="incorrect"?"pill-fail":"pill-warn",style:{fontSize:10}},a.label)),
+          React.createElement("td",{style:{fontSize:12,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},a.note||"--"),
+          React.createElement("td",{style:{fontSize:11,color:C.muted}},(a.updatedAt||"").slice(0,16).replace("T"," "))
+        );}))
+      ),
+      !loading&&!rows.length&&React.createElement(Empty,{title:"No annotations",sub:"Annotate test cases from the Test Case Detail page"})
+    )
+  );
+}
+
+/* ─── EVALUATORS, AUTOMATIONS, WEBHOOKS ──────────────────────────────────── */
+function EvalsPage() {
+  var _d=useFetch("/api/evaluators",["evs"]),data=_d.data,loading=_d.loading,reload=_d.reload;
+  var _sc=useState(false),showCreate=_sc[0],setShowCreate=_sc[1];
+  var _f=useState({name:"",metric:"Faithfulness",samplingRate:1,enabled:true}),form=_f[0],setForm=_f[1];
+  var METRICS=["Faithfulness","AnswerRelevancy","ContextualRecall","ContextualPrecision","Hallucination","Bias","Toxicity","ToolCorrectness","TaskCompletion"];
+  function create(){if(!form.name){toast("Name required","warn");return;}api.post("/api/evaluators",form).then(function(){toast("Created!");setShowCreate(false);reload();});}
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},React.createElement(Btn,{onClick:function(){setShowCreate(function(s){return !s;});}},showCreate?"Cancel":"+ New Evaluator")),
+    showCreate&&React.createElement(SCard,null,React.createElement(SHead,null,"Create Evaluator"),React.createElement("div",{style:{padding:14,display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+      React.createElement("div",null,React.createElement(Lbl,null,"Name"),React.createElement(Inp,{value:form.name,onChange:function(e){setForm(function(f){return Object.assign({},f,{name:e.target.value});});}})),
+      React.createElement("div",null,React.createElement(Lbl,null,"Metric"),React.createElement(Sel,{value:form.metric,onChange:function(e){setForm(function(f){return Object.assign({},f,{metric:e.target.value});});}},METRICS.map(function(m){return React.createElement("option",{key:m,value:m},m);}))),
+      React.createElement("div",{style:{gridColumn:"1/-1"}},React.createElement(Btn,{onClick:create},"Create Evaluator"))
+    )),
+    React.createElement(SCard,null,
+      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Name"),React.createElement("th",null,"Metric"),React.createElement("th",null,"Last Run"),React.createElement("th",null,"Enabled"),React.createElement("th",null,"Actions"))),
+        React.createElement("tbody",null,(data||[]).map(function(ev,i){return React.createElement("tr",{key:i},
+          React.createElement("td",{style:{fontWeight:700}},ev.name),React.createElement("td",null,React.createElement("span",{className:"pill-info",style:{fontSize:10}},ev.metric)),
+          React.createElement("td",{style:{fontSize:11,color:C.muted}},ev.lastRun&&ev.lastRun.slice(0,16)||"Never"),
+          React.createElement("td",null,React.createElement("button",{onClick:function(){api.put("/api/evaluators/"+ev.id,Object.assign({},ev,{enabled:!ev.enabled})).then(function(){reload();});},style:{padding:"2px 9px",borderRadius:20,border:"none",background:ev.enabled?"rgba(16,185,129,.2)":"rgba(248,113,113,.2)",color:ev.enabled?"#34D399":"#F87171",fontWeight:700,fontSize:11,cursor:"pointer"}},ev.enabled?"ON":"OFF")),
+          React.createElement("td",null,React.createElement(Btn,{sm:true,v:"outline",onClick:function(){api.post("/api/evaluators/"+ev.id+"/run-now",{}).then(function(){toast("Triggered!");});}},"Run Now"))
+        );}))
+      ),
+      !loading&&!(data&&data.length)&&React.createElement(Empty,{title:"No evaluators"})
+    )
+  );
+}
+
+function AutosPage() {
+  var _d=useFetch("/api/automations",["autos"]),data=_d.data,loading=_d.loading,reload=_d.reload;
+  var _sc=useState(false),showCreate=_sc[0],setShowCreate=_sc[1];
+  var _f=useState({name:"",action:"webhook",samplingRate:1,enabled:true}),form=_f[0],setForm=_f[1];
+  function create(){if(!form.name){toast("Name required","warn");return;}api.post("/api/automations",form).then(function(){toast("Created!");setShowCreate(false);reload();});}
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},React.createElement(Btn,{onClick:function(){setShowCreate(function(s){return !s;});}},showCreate?"Cancel":"+ New Rule")),
+    showCreate&&React.createElement(SCard,null,React.createElement(SHead,null,"Create Rule"),React.createElement("div",{style:{padding:14,display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+      React.createElement("div",null,React.createElement(Lbl,null,"Name"),React.createElement(Inp,{value:form.name,onChange:function(e){setForm(function(f){return Object.assign({},f,{name:e.target.value});});}})),
+      React.createElement("div",null,React.createElement(Lbl,null,"Action"),React.createElement(Sel,{value:form.action,onChange:function(e){setForm(function(f){return Object.assign({},f,{action:e.target.value});});}},React.createElement("option",{value:"webhook"},"Fire Webhook"),React.createElement("option",{value:"addToQueue"},"Add to Queue"),React.createElement("option",{value:"alert"},"Dashboard Alert"))),
+      React.createElement("div",{style:{gridColumn:"1/-1"}},React.createElement(Btn,{onClick:create},"Create Rule"))
+    )),
+    React.createElement(SCard,null,
+      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Name"),React.createElement("th",null,"Action"),React.createElement("th",null,"Triggers"),React.createElement("th",null,"Enabled"),React.createElement("th",null,"Delete"))),
+        React.createElement("tbody",null,(data||[]).map(function(r,i){return React.createElement("tr",{key:i},
+          React.createElement("td",{style:{fontWeight:700}},r.name),React.createElement("td",null,React.createElement("span",{className:"pill-info",style:{fontSize:10}},r.action)),React.createElement("td",{style:{fontSize:12}},r.triggerCount||0),
+          React.createElement("td",null,React.createElement("button",{onClick:function(){api.put("/api/automations/"+r.id,Object.assign({},r,{enabled:!r.enabled})).then(function(){reload();});},style:{padding:"2px 9px",borderRadius:20,border:"none",background:r.enabled?"rgba(16,185,129,.2)":"rgba(248,113,113,.2)",color:r.enabled?"#34D399":"#F87171",fontWeight:700,fontSize:11,cursor:"pointer"}},r.enabled?"ON":"OFF")),
+          React.createElement("td",null,React.createElement(Btn,{sm:true,v:"danger",onClick:function(){api.del("/api/automations/"+r.id).then(function(){reload();});}},"X"))
+        );}))
+      ),
+      !loading&&!(data&&data.length)&&React.createElement(Empty,{title:"No rules"})
+    )
+  );
+}
+
+function HooksPage() {
+  var _d=useFetch("/api/webhooks",["wh"]),data=_d.data,loading=_d.loading,reload=_d.reload;
+  var _sc=useState(false),showCreate=_sc[0],setShowCreate=_sc[1];
+  var _f=useState({name:"",url:"",events:["new_run"],secret:""}),form=_f[0],setForm=_f[1];
+  var EVTS=["new_run","eval_failed","bug_detected","annotation_saved","rule_matched"];
+  function toggleEvt(e){setForm(function(f){return Object.assign({},f,{events:f.events.includes(e)?f.events.filter(function(x){return x!==e;}):f.events.concat([e])});});}
+  function create(){if(!form.name||!form.url){toast("Name and URL required","warn");return;}api.post("/api/webhooks",form).then(function(){toast("Created!");setShowCreate(false);reload();});}
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},React.createElement(Btn,{onClick:function(){setShowCreate(function(s){return !s;});}},showCreate?"Cancel":"+ New Webhook")),
+    showCreate&&React.createElement(SCard,null,React.createElement(SHead,null,"Register Webhook"),React.createElement("div",{style:{padding:14,display:"flex",flexDirection:"column",gap:12}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+        React.createElement("div",null,React.createElement(Lbl,null,"Name"),React.createElement(Inp,{value:form.name,onChange:function(e){setForm(function(f){return Object.assign({},f,{name:e.target.value});});}})),
+        React.createElement("div",null,React.createElement(Lbl,null,"URL"),React.createElement(Inp,{value:form.url,onChange:function(e){setForm(function(f){return Object.assign({},f,{url:e.target.value});});},placeholder:"https://..."}))
+      ),
+      React.createElement("div",null,React.createElement(Lbl,null,"Events"),React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}},EVTS.map(function(e){return React.createElement("button",{key:e,onClick:function(){toggleEvt(e);},style:{padding:"3px 10px",borderRadius:20,border:"1.5px solid "+(form.events.includes(e)?C.primary:C.border),background:form.events.includes(e)?C.primarySoft:C.card,color:form.events.includes(e)?C.primary:C.muted,fontSize:11,fontWeight:600,cursor:"pointer"}},e);}))),
+      React.createElement(Btn,{onClick:create},"Register Webhook")
+    )),
+    React.createElement(SCard,null,
+      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Name"),React.createElement("th",null,"URL"),React.createElement("th",null,"Events"),React.createElement("th",null,"Actions"))),
+        React.createElement("tbody",null,(data||[]).map(function(h,i){return React.createElement("tr",{key:i},
+          React.createElement("td",{style:{fontWeight:700}},h.name),React.createElement("td",{style:{fontSize:11,color:C.muted,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},h.url),
+          React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:3,flexWrap:"wrap"}},(h.events||[]).map(function(e){return React.createElement("span",{key:e,className:"pill-info",style:{fontSize:9,padding:"0 5px"}},e);}))),
+          React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:5}},
+            React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){api.post("/api/webhooks/"+h.id+"/test",{}).then(function(r){toast(r.success?"Test OK ("+r.status+")":"Failed: "+(r.error||""),"warn");});}},"Test"),
+            React.createElement(Btn,{sm:true,v:"danger",onClick:function(){api.del("/api/webhooks/"+h.id).then(function(){reload();});}},"X")
+          ))
+        );}))
+      ),
+      !loading&&!(data&&data.length)&&React.createElement(Empty,{title:"No webhooks"})
+    )
+  );
+}
+
+/* ─── DATASETS & PROMPTS & PLAYGROUND & SETTINGS ─────────────────────────── */
+function DatasetsPage() {
+  var _s=useState(""),search=_s[0],setSearch=_s[1];
+  var _d=useFetch("/api/datasets"+(search?"?search="+encodeURIComponent(search):""),["dsets",search]),data=_d.data,loading=_d.loading;
+  var _sel=useState(null),sel=_sel[0],setSel=_sel[1];
+  var _h=useFetch(sel?"/api/datasets/"+encodeURIComponent(sel):null,["dseth",sel]),hist=_h.data;
+  return React.createElement(PW,null,
+    React.createElement("div",{className:"filter-bar"},
+      React.createElement(Inp,{value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search by name or input...",style:{flex:1,minHeight:28}}),
+      React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){window.open("/api/datasets/export?fmt=csv");}},"Export CSV"),
+      React.createElement("div",{style:{fontSize:12,color:C.muted}},(data&&data.length||0)+" cases")
+    ),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}},
+      React.createElement(SCard,null,
+        loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Name"),React.createElement("th",null,"Input preview"),React.createElement("th",null,"Runs"),React.createElement("th",null,"Avg Score"))),
+          React.createElement("tbody",null,(data||[]).map(function(c,i){return React.createElement("tr",{key:i,style:{cursor:"pointer",background:sel===c.name?C.primarySoft:""},onClick:function(){setSel(c.name===sel?null:c.name);}},
+            React.createElement("td",{style:{fontWeight:600,fontSize:12}},c.name),React.createElement("td",{style:{fontSize:11,color:C.muted,maxWidth:240,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.input||"--"),React.createElement("td",{style:{fontSize:12}},c.runCount),
+            React.createElement("td",null,c.avgScore!=null&&React.createElement(ScoreBar,{score:c.avgScore}))
+          );}))
+        ),
+        !loading&&!(data&&data.length)&&React.createElement(Empty,{title:"No datasets"})
+      ),
+      sel&&React.createElement(SCard,null,React.createElement(SHead,{action:React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){setSel(null);}},"X")},"History: "+sel),
+        React.createElement("div",{style:{overflowX:"auto"}},React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Run"),React.createElement("th",null,"Status"),React.createElement("th",null,"Metrics"))),
+          React.createElement("tbody",null,(hist&&hist.history||[]).map(function(h,i){return React.createElement("tr",{key:i},
+            React.createElement("td",{style:{fontSize:11,color:C.muted}},(h.datetime||"").slice(0,10)),
+            React.createElement("td",null,React.createElement("span",{className:h.success?"pill-pass":"pill-fail",style:{fontSize:10}},h.success?"PASS":"FAIL")),
+            React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:3,flexWrap:"wrap"}},(h.metrics||[]).map(function(m,j){return React.createElement(MetPill,{key:j,name:m.name,score:m.score,success:m.success,sm:true});})))
+          );}))
+        ))
+      )
+    )
+  );
+}
+
+function PromptsPage() {
+  var _d=useFetch("/api/prompts",["prmpts"]),prompts=_d.data,loading=_d.loading,reload=_d.reload;
+  var _sc=useState(false),showCreate=_sc[0],setShowCreate=_sc[1];
+  var _f=useState({alias:"",version:"v1",text:"",label:"draft"}),form=_f[0],setForm=_f[1];
+  var _sel=useState(null),sel=_sel[0],setSel=_sel[1];
+  var _v=useFetch(sel?"/api/prompts/"+sel:null,["pv",sel]),vers=_v.data;
+  var LC={draft:{bg:C.bg,c:C.muted},staging:{bg:C.amberSoft,c:C.amber},production:{bg:C.tealSoft,c:C.teal}};
+  function save(){if(!form.alias||!form.text){toast("Alias and text required","warn");return;}api.post("/api/prompts",form).then(function(){toast("Saved!");setShowCreate(false);reload();});}
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},React.createElement(Btn,{onClick:function(){setShowCreate(function(s){return !s;});}},showCreate?"Cancel":"+ Save Prompt")),
+    showCreate&&React.createElement(SCard,null,React.createElement(SHead,null,"Save Prompt Version"),React.createElement("div",{style:{padding:14,display:"flex",flexDirection:"column",gap:12}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
+        React.createElement("div",null,React.createElement(Lbl,null,"Alias"),React.createElement(Inp,{value:form.alias,onChange:function(e){setForm(function(f){return Object.assign({},f,{alias:e.target.value});});},placeholder:"my-rag-prompt"})),
+        React.createElement("div",null,React.createElement(Lbl,null,"Version"),React.createElement(Inp,{value:form.version,onChange:function(e){setForm(function(f){return Object.assign({},f,{version:e.target.value}); });}})),
+        React.createElement("div",null,React.createElement(Lbl,null,"Label"),React.createElement(Sel,{value:form.label,onChange:function(e){setForm(function(f){return Object.assign({},f,{label:e.target.value});});}},React.createElement("option",{value:"draft"},"Draft"),React.createElement("option",{value:"staging"},"Staging"),React.createElement("option",{value:"production"},"Production")))
+      ),
+      React.createElement("div",null,React.createElement(Lbl,null,"Prompt Text"),React.createElement(TA,{value:form.text,onChange:function(e){setForm(function(f){return Object.assign({},f,{text:e.target.value});});},rows:7,style:{fontFamily:"monospace",fontSize:12}})),
+      React.createElement(Btn,{onClick:save},"Save Version")
+    )),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}},
+      React.createElement(SCard,null,React.createElement(SHead,null,"Saved Prompts"),
+        loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Alias"),React.createElement("th",null,"Versions"),React.createElement("th",null,"Status"),React.createElement("th",null,"Updated"))),
+          React.createElement("tbody",null,(prompts||[]).map(function(p,i){var lc=LC[p.currentLabel]||LC.draft;return React.createElement("tr",{key:i,style:{cursor:"pointer",background:sel===p.alias?C.primarySoft:""},onClick:function(){setSel(p.alias===sel?null:p.alias);}},
+            React.createElement("td",{style:{fontWeight:700,fontFamily:"monospace",fontSize:12}},p.alias),React.createElement("td",{style:{fontSize:12}},(p.versions||[]).length),
+            React.createElement("td",null,p.currentLabel&&React.createElement("span",{style:{background:lc.bg,color:lc.c,padding:"1px 8px",borderRadius:20,fontSize:11,fontWeight:700}},p.currentLabel)),
+            React.createElement("td",{style:{fontSize:11,color:C.muted}},(p.updatedAt||"").slice(0,10))
+          );}))
+        ),
+        !loading&&!(prompts&&prompts.length)&&React.createElement(Empty,{title:"No prompts saved"})
+      ),
+      sel&&React.createElement(SCard,null,React.createElement(SHead,{action:React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){setSel(null);}},"X")},"Versions: "+sel),
+        React.createElement("div",{style:{padding:12,overflow:"auto",maxHeight:460}},
+          (vers||[]).map(function(v,i){var lc=LC[v.label]||LC.draft;return React.createElement("div",{key:i,style:{border:"1.5px solid "+C.border,borderRadius:9,padding:11,marginBottom:9}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,marginBottom:7}},
+              React.createElement("span",{style:{fontWeight:700,fontFamily:"monospace",fontSize:13}},v.version),
+              React.createElement("span",{style:{background:lc.bg,color:lc.c,padding:"1px 7px",borderRadius:20,fontSize:10,fontWeight:700}},v.label),
+              React.createElement("span",{style:{fontSize:11,color:C.muted,marginLeft:"auto"}},(v.createdAt||"").slice(0,10))
+            ),
+            React.createElement("pre",{style:{fontSize:11,whiteSpace:"pre-wrap",maxHeight:110,overflow:"auto",color:C.textSub}},v.text),
+            React.createElement("div",{style:{marginTop:8,display:"flex",gap:6}},
+              v.label!=="production"&&React.createElement(Btn,{sm:true,onClick:function(){api.put("/api/prompts/"+sel+"/label",{label:"production"}).then(function(){toast("Promoted!");reload();setSel(null);});}},"Promote to Production"),
+              React.createElement(Btn,{sm:true,v:"danger",onClick:function(){api.del("/api/prompts/"+sel+"/"+v.version).then(function(){toast("Deleted");reload();setSel(null);});}},"Delete")
+            )
+          );}))
+      )
+    )
+  );
+}
+
+function PlaygroundPage() {
+  var _prov=useFetch("/api/playground/providers",["pgp"]),prov=_prov.data;
+  var _ems=useFetch("/api/playground/eval-metrics",["pgem"]),evalMetricsList=_ems.data||[];
+  var _pr=useState("You are a helpful assistant.\nAnswer ONLY based on the context below.\n\nContext:\n{{context}}\n\nQuestion: {{question}}\n\nAnswer:"),prompt=_pr[0],setPrompt=_pr[1];
+  var _in=useState(""),input=_in[0],setInput=_in[1];
+  var _res=useState(null),result=_res[0],setResult=_res[1];
+  var _busy=useState(false),busy=_busy[0],setBusy=_busy[1];
+  var _em=useState("Faithfulness"),evalMetric=_em[0],setEvalMetric=_em[1];
+  var _et=useState(0.5),evalThresh=_et[0],setEvalThresh=_et[1];
+  var _ec=useState(""),evalContext=_ec[0],setEvalContext=_ec[1];
+  var _er=useState(null),evalResult=_er[0],setEvalResult=_er[1];
+  var _eb=useState(false),evalBusy=_eb[0],setEvalBusy=_eb[1];
+  var providers=prov&&prov.providers||[];
+  var configured=prov&&prov.configured;
+
+  function run(){
+    if(!input.trim()){toast("Enter a test input","warn");return;}
+    setBusy(true);setResult(null);
+    api.post("/api/playground/run",{prompt:prompt,input:input,temperature:0,max_tokens:1000}).then(function(r){setResult(r);setBusy(false);if(r&&r.error&&!r.output)toast(r.error.slice(0,80),"error");});
+  }
+  function runEval(){
+    if(!result||!result.output){toast("Run a prompt first","warn");return;}
+    setEvalBusy(true);setEvalResult(null);
+    api.post("/api/playground/evaluate",{input:input,output:result.output,metric:evalMetric,threshold:evalThresh,context:evalContext?[evalContext]:[]}).then(function(r){setEvalResult(r);setEvalBusy(false);});
+  }
+
+  return React.createElement(PW,null,
+    React.createElement("div",{style:{display:"flex",gap:9,alignItems:"center",flexWrap:"wrap"}},
+      providers.length>0?providers.map(function(p,i){return React.createElement("span",{key:i,style:{background:C.tealSoft,color:C.teal,border:"1px solid "+C.teal+"44",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:700}},"OK "+p.name+" -- "+p.model);}):
+      React.createElement("div",{style:{background:C.redSoft,border:"1px solid "+C.red+"44",borderRadius:9,padding:"8px 13px",fontSize:12,color:C.red,width:"100%"}},
+        React.createElement("b",null,"No LLM provider configured."),React.createElement("br",null),
+        React.createElement("code",{style:{fontSize:11}},"deepeval set-openai --model gpt-4o-mini --prompt-api-key"),React.createElement("br",null),
+        React.createElement("code",{style:{fontSize:11}},"deepeval set-anthropic --model claude-3-haiku-20240307 --prompt-api-key")
+      )
+    ),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+        React.createElement(SCard,null,React.createElement(SHead,null,"Prompt Template"),React.createElement("div",{style:{padding:12}},
+          React.createElement("div",{style:{fontSize:11,color:C.muted,marginBottom:5}},"Use {{question}} or {{input}} as placeholders."),
+          React.createElement(TA,{value:prompt,onChange:function(e){setPrompt(e.target.value);},rows:10,style:{fontFamily:"monospace",fontSize:12,background:C.bg}})
+        )),
+        React.createElement(SCard,null,React.createElement(SHead,null,"Test Input"),React.createElement("div",{style:{padding:12,display:"flex",flexDirection:"column",gap:10}},
+          React.createElement(TA,{value:input,onChange:function(e){setInput(e.target.value);},placeholder:"Enter your test question / message...",rows:4}),
+          React.createElement(Btn,{onClick:run,disabled:busy||!configured},busy?"Running...":"Run Prompt")
+        ))
+      ),
+      React.createElement(SCard,null,React.createElement(SHead,{action:result&&React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){setResult(null);setEvalResult(null);}},"Clear")},"Output"),
+        React.createElement("div",{style:{padding:12,display:"flex",flexDirection:"column",gap:10}},
+          !result&&!busy&&React.createElement("div",{style:{color:C.muted,fontSize:13,padding:"48px 0",textAlign:"center"}},"Output will appear here after running..."),
+          busy&&React.createElement("div",{style:{color:C.muted,fontSize:13,padding:"48px 0",textAlign:"center"}},"Calling "+(providers[0]&&providers[0].name||"LLM")+"..."),
+          result&&!busy&&React.createElement(React.Fragment,null,
+            React.createElement("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
+              React.createElement("span",{style:{background:C.primarySoft,color:C.primary,padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:700}},result.provider),
+              React.createElement("span",{style:{background:C.borderSoft,color:C.textSub,padding:"2px 10px",borderRadius:20,fontSize:11}},result.model),
+              React.createElement("span",{style:{background:C.borderSoft,color:C.muted,padding:"2px 10px",borderRadius:20,fontSize:11}},result.latency_ms+"ms"),
+              result.input_tokens&&React.createElement("span",{style:{background:C.borderSoft,color:C.muted,padding:"2px 10px",borderRadius:20,fontSize:11}},"in:"+result.input_tokens+" out:"+result.output_tokens)
+            ),
+            result.error&&React.createElement("div",{style:{background:C.redSoft,border:"1px solid "+C.red+"44",borderRadius:8,padding:"9px 12px",fontSize:12,color:C.red,whiteSpace:"pre-wrap"}},result.error),
+            result.output&&React.createElement("div",{style:{background:C.bg,border:"1.5px solid "+C.border,borderRadius:8,padding:"11px 13px",fontSize:13,whiteSpace:"pre-wrap",color:C.text,minHeight:200,lineHeight:1.65}},result.output)
+          )
+        )
+      )
+    ),
+    React.createElement(SCard,null,
+      React.createElement(SHead,null,"Evaluate Output with DeepEval Metric"),
+      React.createElement("div",{style:{padding:12,display:"flex",flexDirection:"column",gap:10}},
+        !result&&React.createElement("div",{style:{color:C.muted,fontSize:12}},"Run a prompt first to enable metric evaluation."),
+        result&&result.output&&React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}},
+            React.createElement("div",null,React.createElement(Lbl,null,"Metric"),React.createElement(Sel,{value:evalMetric,onChange:function(e){setEvalMetric(e.target.value);}},evalMetricsList.map(function(m,i){return React.createElement("option",{key:i,value:m},m);}))),
+            React.createElement("div",null,React.createElement(Lbl,null,"Threshold"),React.createElement("input",{type:"number",min:0,max:1,step:0.05,value:evalThresh,onChange:function(e){setEvalThresh(parseFloat(e.target.value));},style:{width:"100%",padding:"7px 11px",border:"1.5px solid "+C.border,borderRadius:8,background:C.bg,color:C.text,fontSize:13}})),
+            React.createElement("div",null,React.createElement(Lbl,null,"Context (optional)"),React.createElement(Inp,{value:evalContext,onChange:function(e){setEvalContext(e.target.value);},placeholder:"retrieved context..."}))
+          ),
+          React.createElement(Btn,{onClick:runEval,disabled:evalBusy},evalBusy?"Evaluating...":"Run Metric"),
+          evalResult&&React.createElement("div",{style:{background:C.bg,border:"1.5px solid "+(evalResult.success?C.teal:C.red)+"55",borderRadius:9,padding:"12px 14px",marginTop:8}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:6}},
+              React.createElement("span",{className:evalResult.success?"pill-pass":"pill-fail",style:{padding:"2px 11px",fontSize:12}},evalResult.success?"PASS":"FAIL"),
+              React.createElement("span",{style:{fontSize:14,fontWeight:700,color:C.text}},evalResult.metric),
+              React.createElement("span",{style:{fontSize:20,fontWeight:800,color:evalResult.success?C.teal:C.red,marginLeft:"auto"}},evalResult.score!=null?evalResult.score.toFixed(3):"--"),
+              React.createElement("span",{style:{fontSize:12,color:C.muted}},"/ "+evalResult.threshold)
+            ),
+            evalResult.reason&&React.createElement("div",{style:{fontSize:13,color:C.textSub,lineHeight:1.6}},evalResult.reason),
+            evalResult.error&&React.createElement("div",{style:{color:C.red,fontSize:12,whiteSpace:"pre-wrap"}},evalResult.error)
+          )
+        )
+      )
+    )
+  );
+}
+
+/* --- SCORE CONFIGS PANEL ------------------------------------------------ */
+function ScoreConfigsPanel() {
+  var _d = useFetch("/api/score-configs", ["scfgp"]), configs = _d.data, loading = _d.loading, reload = _d.reload;
+  var _sc = useState(false), showCreate = _sc[0], setShowCreate = _sc[1];
+  var _f  = useState({ name: "", type: "numeric", rangeMin: 0, rangeMax: 1, categories: "", description: "" });
+  var form = _f[0], setForm = _f[1];
+
+  function create() {
+    if (!form.name) { toast("Name required", "warn"); return; }
+    var payload = {
+      name: form.name, type: form.type, description: form.description,
+      rangeMin: parseFloat(form.rangeMin) || 0,
+      rangeMax: parseFloat(form.rangeMax) || 1,
+      categories: form.type === "categorical" ? form.categories.split(",").map(function(c) { return c.trim(); }).filter(Boolean) : [],
+    };
+    api.post("/api/score-configs", payload).then(function() { toast("Created!"); setShowCreate(false); reload(); });
+  }
+
+  return React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } },
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+      React.createElement("div", { style: { fontSize: 12, color: C.muted } }, "Score Configs define scoring dimensions used in Annotation Queue reviews."),
+      React.createElement(Btn, { sm: true, onClick: function() { setShowCreate(function(s) { return !s; }); } }, showCreate ? "Cancel" : "+ New Config")
+    ),
+    showCreate && React.createElement(SCard, null,
+      React.createElement(SHead, null, "Create Score Config"),
+      React.createElement("div", { style: { padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } },
+        React.createElement("div", null, React.createElement(Lbl, null, "Name *"), React.createElement(Inp, { value: form.name, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { name: e.target.value }); }); }, placeholder: "e.g. Factual Accuracy" })),
+        React.createElement("div", null, React.createElement(Lbl, null, "Type"),
+          React.createElement(Sel, { value: form.type, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { type: e.target.value }); }); } },
+            React.createElement("option", { value: "numeric" }, "Numeric (slider 0-1)"),
+            React.createElement("option", { value: "boolean" }, "Boolean (Yes/No)"),
+            React.createElement("option", { value: "categorical" }, "Categorical (dropdown)")
+          )
+        ),
+        form.type === "numeric" && React.createElement("div", null, React.createElement(Lbl, null, "Range"), React.createElement("div", { style: { display: "flex", gap: 8 } }, React.createElement(Inp, { type: "number", value: form.rangeMin, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { rangeMin: e.target.value }); }); }, style: { width: "50%" } }), React.createElement(Inp, { type: "number", value: form.rangeMax, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { rangeMax: e.target.value }); }); }, style: { width: "50%" } }))),
+        form.type === "categorical" && React.createElement("div", { style: { gridColumn: "1/-1" } },
+          React.createElement(Lbl, null, "Categories (comma-separated)"),
+          React.createElement(Inp, { value: form.categories, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { categories: e.target.value }); }); }, placeholder: "correct, partially correct, incorrect" })
+        ),
+        React.createElement("div", { style: { gridColumn: "1/-1" } },
+          React.createElement(Lbl, null, "Description"), React.createElement(Inp, { value: form.description, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { description: e.target.value }); }); } })
+        ),
+        React.createElement("div", { style: { gridColumn: "1/-1" } }, React.createElement(Btn, { onClick: create }, "Create Score Config"))
+      )
+    ),
+    React.createElement(SCard, null,
+      React.createElement(SHead, null, "Score Configs"),
+      loading ? React.createElement(Loading, null) : (configs && configs.length) ?
+        React.createElement("table", null,
+          React.createElement("thead", null, React.createElement("tr", null,
+            React.createElement("th", null, "Name"), React.createElement("th", null, "Type"),
+            React.createElement("th", null, "Range / Options"), React.createElement("th", null, "Delete")
+          )),
+          React.createElement("tbody", null, configs.map(function(c, i) {
+            return React.createElement("tr", { key: i },
+              React.createElement("td", { style: { fontWeight: 700 } }, c.name),
+              React.createElement("td", null, React.createElement("span", { className: "pill-info", style: { fontSize: 10 } }, c.type)),
+              React.createElement("td", { style: { fontSize: 12 } },
+                c.type === "numeric" ? c.rangeMin + " to " + c.rangeMax :
+                c.type === "boolean" ? "Yes / No" :
+                (c.categories || []).join(", ")
+              ),
+              React.createElement("td", null, React.createElement(Btn, { sm: true, v: "danger",
+                onClick: function() { api.del("/api/score-configs/" + c.id).then(function() { reload(); }); }
+              }, "X"))
+            );
+          }))
+        ) :
+        React.createElement(Empty, { title: "No score configs yet", sub: "Create scoring dimensions for Annotation Queue reviews" })
+    )
+  );
+}
+
+function SettingsPage() {
+  var _s=useFetch("/api/settings",["sett"]),s=_s.data,loading=_s.loading;
+  var _h=useFetch("/api/health",["hlth"]),health=_h.data;
+  var _au=useFetch("/api/auth/users",["authu"]),authUsers=_au.data,rldU=_au.reload;
+  var _tab=useState("config"),tab=_tab[0],setTab=_tab[1];
+  var _folder=useState(""),folder=_folder[0],setFolder=_folder[1];
+  var _thresh=useState(.7),thresh=_thresh[0],setThresh=_thresh[1];
+  var _nu=useState({username:"",password:"",role:"viewer"}),newUser=_nu[0],setNewUser=_nu[1];
+  useEffect(function(){if(s){setFolder(s.historyFolder||"");setThresh(s.passRateThreshold||.7);}},[(s&&s.historyFolder)]);
+  function saveSettings(){api.post("/api/settings",{historyFolder:folder,passRateThreshold:+thresh}).then(function(){toast("Saved!");});}
+  function createUser(){if(!newUser.username||!newUser.password){toast("Username and password required","warn");return;}api.post("/api/auth/users",newUser).then(function(r){if(r.success){toast("User created!");rldU();setNewUser({username:"",password:"",role:"viewer"});}else toast(r.detail||"Error","error");});}
+  if(loading)return React.createElement(PW,null,React.createElement(Loading,null));
+  return React.createElement(PW,null,
+    React.createElement(SR,null,
+      React.createElement(StatCard,{label:"Total Runs",value:health&&health.runCount||0,icon:"=>",grad:C.primaryGrad}),
+      React.createElement(StatCard,{label:"Port",value:health&&health.port||5000,icon:"P",grad:C.tealGrad}),
+      React.createElement(StatCard,{label:"Version",value:health&&health.version||"1.0.0",icon:"V",grad:C.purpleGrad}),
+      React.createElement(StatCard,{label:"Disk",value:s&&s.diskUsageMB?s.diskUsageMB+" MB":"--",icon:"D",grad:C.amberGrad})
+    ),
+    React.createElement("div",{className:"tab-bar"},["config","users","scorecfg","quickstart"].map(function(t){return React.createElement("div",{key:t,className:"tab"+(tab===t?" on":""),onClick:function(){setTab(t);},style:{textTransform:"capitalize",fontSize:12}},t==="scorecfg"?"Score Configs":t);})),
+    tab==="config"&&React.createElement(SCard,null,React.createElement(SHead,null,"Configuration"),React.createElement("div",{style:{padding:16,display:"flex",flexDirection:"column",gap:14}},
+      React.createElement("div",null,React.createElement(Lbl,null,"Eval History Folder"),React.createElement(Inp,{value:folder,onChange:function(e){setFolder(e.target.value);},placeholder:"./eval_history"}),React.createElement("div",{style:{fontSize:11,color:C.muted,marginTop:4}},"Set DEEPEVAL_RESULTS_FOLDER env var to auto-save runs here")),
+      React.createElement("div",null,React.createElement(Lbl,null,"Pass Rate Alert Threshold ("+((+thresh*100)||70).toFixed(0)+"%)"),React.createElement("input",{type:"range",min:0,max:1,step:.05,value:thresh,onChange:function(e){setThresh(e.target.value);},style:{width:"100%",margin:"6px 0"}})),
+      React.createElement(Btn,{onClick:saveSettings,style:{alignSelf:"flex-start"}},"Save Settings")
+    )),
+    tab==="users"&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      React.createElement(SCard,null,React.createElement(SHead,null,"Team Users"),React.createElement("div",{style:{padding:12}},
+        React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Username"),React.createElement("th",null,"Role"),React.createElement("th",null,"Delete"))),
+          React.createElement("tbody",null,(authUsers||[]).map(function(u,i){return React.createElement("tr",{key:i},React.createElement("td",{style:{fontWeight:600}},u.username),React.createElement("td",null,React.createElement("span",{className:"pill-info",style:{fontSize:10}},u.role)),React.createElement("td",null,React.createElement(Btn,{sm:true,v:"danger",onClick:function(){api.del("/api/auth/users/"+u.username).then(function(){rldU();});}},"X")));}))
+        ),
+        React.createElement("div",{style:{height:1,background:C.border,margin:"12px 0"}}),
+        React.createElement(Lbl,null,"Add User"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginTop:6}},
+          React.createElement(Inp,{value:newUser.username,onChange:function(e){setNewUser(function(u){return Object.assign({},u,{username:e.target.value});});},placeholder:"Username"}),
+          React.createElement(Inp,{type:"password",value:newUser.password,onChange:function(e){setNewUser(function(u){return Object.assign({},u,{password:e.target.value});});},placeholder:"Password"}),
+          React.createElement(Sel,{value:newUser.role,onChange:function(e){setNewUser(function(u){return Object.assign({},u,{role:e.target.value});}); }},React.createElement("option",{value:"viewer"},"Viewer"),React.createElement("option",{value:"admin"},"Admin")),
+          React.createElement(Btn,{onClick:createUser},"Add User")
+        )
+      )),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Auth"),React.createElement("div",{style:{padding:12,fontSize:13,color:C.textSub,lineHeight:1.7}},
+        React.createElement("div",null,"Auth enabled: ",React.createElement("b",null,health&&health.authEnabled?"Yes":"No")),
+        React.createElement("div",null,"Default: admin / admin123"),
+        React.createElement("div",{style:{marginTop:8,fontSize:11,color:C.muted}},"Set DEEPEVAL_AUTH=false in .env to disable authentication")
+      ))
+    ),
+    tab==="scorecfg"&&React.createElement(ScoreConfigsPanel,null),
+    tab==="scorecfg"&&React.createElement(ScoreConfigsPanel,null),
+    tab==="quickstart"&&React.createElement(SCard,null,React.createElement(SHead,null,"Quick Start Guide"),React.createElement("div",{style:{padding:16}},
+      [["1. Set history folder","# Windows:\nset DEEPEVAL_RESULTS_FOLDER=./eval_history\n# Linux/Mac:\nexport DEEPEVAL_RESULTS_FOLDER=./eval_history"],
+       ["2. Run evaluations","from deepeval import evaluate\nfrom deepeval.test_case import LLMTestCase\nfrom deepeval.metrics import FaithfulnessMetric\n\nevaluate(\n  [LLMTestCase(input='...', actual_output='...', retrieval_context=['...'])],\n  [FaithfulnessMetric(threshold=0.7)]\n)"],
+       ["3. Tag with environment + version","import deepeval\ndeepeval.log_hyperparameters(\n  model='gpt-4o', environment='production',\n  version='v1.2.3', chunk_size=512, top_k=5\n)"],
+       ["4. Configure Playground LLM","deepeval set-openai --model gpt-4o-mini --prompt-api-key\n# or\ndeepeval set-anthropic --model claude-3-haiku-20240307 --prompt-api-key"]
+      ].map(function(item){
+        return React.createElement("div",{key:item[0],style:{marginBottom:18}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:C.text,marginBottom:7}},item[0]),
+          React.createElement("pre",{style:{fontSize:11,background:"#0d1117",color:"#e2e8f0",padding:"10px 14px",borderRadius:9,overflow:"auto",whiteSpace:"pre-wrap"}},item[1])
+        );
+      })
+    ))
+  );
+}
+
+
+/* ======================================================================
+   SLA DASHBOARD PAGE
+====================================================================== */
+function SLAPage() {
+  var _comp = useFetch("/api/sla/compliance", ["slac"]), comp = _comp.data, loading = _comp.loading;
+  var _br   = useFetch("/api/sla/breaches?limit=20", ["brchs"]), breaches = _br.data;
+  var _slos = useFetch("/api/sla/slos", ["slos"]), sloList = _slos.data, sloLoad = _slos.loading, sloReload = _slos.reload;
+  var _tab  = useState("status"), tab = _tab[0], setTab = _tab[1];
+  var _sc   = useState(false), showCreate = _sc[0], setShowCreate = _sc[1];
+  var _sel  = useState(null), selSlo = _sel[0], setSelSlo = _sel[1];
+  var _hist = useFetch(selSlo ? "/api/sla/slis/" + selSlo + "/history" : null, ["slih", selSlo]), hist = _hist.data;
+  var _f    = useState({ name: "", type: "metric_pass_rate", metric: "Faithfulness", spanType: "llm", operator: ">=", target: 0.8, windowRuns: 10, enabled: true });
+  var form = _f[0], setForm = _f[1];
+
+  var slos = (comp && comp.slos) || [];
+  var passing   = comp && comp.passing   || 0;
+  var breaching = comp && comp.breaching || 0;
+  var total     = comp && comp.total     || 0;
+  var compliance = comp && comp.compliance != null ? (comp.compliance * 100).toFixed(1) + "%" : "--";
+
+  var SLO_TYPES = [
+    { v: "metric_pass_rate",  l: "Metric Pass Rate (%)" },
+    { v: "metric_avg_score",  l: "Metric Avg Score" },
+    { v: "latency_p95",       l: "Latency P95 (ms)" },
+    { v: "latency_p99",       l: "Latency P99 (ms)" },
+    { v: "error_rate",        l: "Error Rate" },
+    { v: "cost_per_run",      l: "Cost Per Run ($)" },
+    { v: "pass_rate",         l: "Overall Pass Rate" },
+  ];
+
+  function createSlo() {
+    if (!form.name) { toast("Name required", "warn"); return; }
+    api.post("/api/sla/slos", form).then(function() {
+      toast("SLO created!"); setShowCreate(false); sloReload();
+    });
+  }
+
+  function deleteSlo(id) {
+    api.del("/api/sla/slos/" + id).then(function() { toast("Deleted"); sloReload(); });
+  }
+
+  // SLI history chart for selected SLO
+  var histChart = hist && hist.length ? {
+    labels: hist.slice().reverse().map(function(h) { return (h.datetime || "").slice(5, 16); }),
+    datasets: [
+      {
+        label: "SLI", data: hist.slice().reverse().map(function(h) { return h.sli; }),
+        borderColor: C.primary, backgroundColor: C.primarySoft,
+        tension: 0.4, fill: true, pointRadius: 3,
+      },
+      {
+        label: "Target",
+        data: hist.slice().reverse().map(function(h) { return h.target; }),
+        borderColor: C.red, borderDash: [6, 3],
+        borderWidth: 2, pointRadius: 0, fill: false,
+      }
+    ]
+  } : null;
+
+  var statusColor = { ok: C.teal, breach: C.red, no_data: C.muted };
+  var statusLabel = { ok: "OK", breach: "BREACH", no_data: "NO DATA" };
+  var statusCls   = { ok: "pill-pass", breach: "pill-fail", no_data: "pill-info" };
+
+  return React.createElement(PW, null,
+    // Top stat cards
+    React.createElement(SR, null,
+      React.createElement(StatCard, { label: "SLO Compliance", value: compliance, icon: "%", grad: (comp && comp.compliance >= 0.9) ? C.tealGrad : (comp && comp.compliance >= 0.7 ? C.amberGrad : C.redGrad) }),
+      React.createElement(StatCard, { label: "SLOs Passing",   value: passing,    icon: "OK", grad: C.tealGrad }),
+      React.createElement(StatCard, { label: "SLOs Breaching", value: breaching,  icon: "!",  grad: breaching > 0 ? C.redGrad : C.tealGrad }),
+      React.createElement(StatCard, { label: "Total SLOs",     value: total,      icon: "S",  grad: C.primaryGrad }),
+      React.createElement(StatCard, { label: "Breaches Today", value: (breaches || []).filter(function(b) { return (b.timestamp || "").startsWith(new Date().toISOString().slice(0, 10)); }).length, icon: "W", grad: C.amberGrad })
+    ),
+
+    // Tab bar
+    React.createElement("div", { className: "tab-bar" },
+      ["status", "history", "breaches", "configure"].map(function(t) {
+        return React.createElement("div", { key: t, className: "tab" + (tab === t ? " on" : ""), onClick: function() { setTab(t); }, style: { textTransform: "capitalize" } }, t);
+      })
+    ),
+
+    // SLO Status table
+    tab === "status" && React.createElement(SCard, null,
+      React.createElement(SHead, { action: React.createElement(Btn, { sm: true, onClick: function() { api.post("/api/sla/seed-defaults", {}).then(function() { sloReload(); toast("Default SLOs seeded!"); }); }, v: "outline" }, "Seed Defaults") },
+        "SLO Status"
+      ),
+      sloLoad ? React.createElement(Loading, null) : React.createElement("div", { style: { overflowX: "auto" } },
+        React.createElement("table", null,
+          React.createElement("thead", null, React.createElement("tr", null,
+            React.createElement("th", null, "SLO Name"),
+            React.createElement("th", null, "Type"),
+            React.createElement("th", null, "Target"),
+            React.createElement("th", null, "Current SLI"),
+            React.createElement("th", null, "Status"),
+            React.createElement("th", null, "Trend")
+          )),
+          React.createElement("tbody", null, slos.map(function(s, i) {
+            var pct = s.type === "metric_pass_rate" || s.type === "pass_rate" ? (s.sli != null ? (s.sli * 100).toFixed(1) + "%" : "--") : s.sli != null ? (s.type.includes("latency") ? s.sli + "ms" : s.sli.toFixed(4)) : "--";
+            return React.createElement("tr", { key: i, style: { cursor: "pointer", background: selSlo === s.id ? C.primarySoft : "" }, onClick: function() { setSelSlo(selSlo === s.id ? null : s.id); setTab("history"); } },
+              React.createElement("td", { style: { fontWeight: 700 } }, s.name),
+              React.createElement("td", null, React.createElement("span", { className: "pill-info", style: { fontSize: 10 } }, s.type)),
+              React.createElement("td", { style: { fontFamily: "monospace", fontSize: 12 } }, s.operator + " " + (s.type.includes("latency") ? s.target + "ms" : s.type === "cost_per_run" ? "$" + s.target : (s.target * (s.type === "metric_pass_rate" || s.type === "pass_rate" ? 100 : 1)).toFixed(s.type.includes("rate") || s.type.includes("pass") ? 0 : 2) + (s.type.includes("rate") || s.type.includes("pass") ? "%" : ""))),
+              React.createElement("td", { style: { fontWeight: 700, color: statusColor[s.status] || C.muted } }, pct),
+              React.createElement("td", null, React.createElement("span", { className: statusCls[s.status] || "pill-info", style: { fontSize: 10 } }, statusLabel[s.status] || s.status)),
+              React.createElement("td", null)
+            );
+          }))
+        )
+      ),
+      !sloLoad && !slos.length && React.createElement(Empty, { title: "No SLOs configured", sub: "Click 'Seed Defaults' to add 8 standard SLOs", icon: "SLA" })
+    ),
+
+    // SLI History chart
+    tab === "history" && React.createElement("div", { style: { display: "grid", gridTemplateColumns: "280px 1fr", gap: 14 } },
+      React.createElement(SCard, null,
+        React.createElement(SHead, null, "SLOs"),
+        React.createElement("div", { style: { padding: 10 } },
+          slos.map(function(s, i) {
+            return React.createElement("button", { key: i, onClick: function() { setSelSlo(s.id); },
+              style: { display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", width: "100%", background: selSlo === s.id ? C.primarySoft : "transparent", border: "none", borderRadius: 7, cursor: "pointer", marginBottom: 2 }
+            },
+              React.createElement("span", { className: statusCls[s.status] || "pill-info", style: { fontSize: 9, padding: "0 6px" } }, statusLabel[s.status] || s.status),
+              React.createElement("span", { style: { fontSize: 12, fontWeight: selSlo === s.id ? 700 : 400, color: C.text } }, s.name)
+            );
+          })
+        )
+      ),
+      selSlo ? React.createElement(SCard, null,
+        React.createElement(SHead, null, "SLI Over Time — " + (slos.find(function(s) { return s.id === selSlo; }) || {}).name),
+        React.createElement("div", { style: { padding: 14 } },
+          histChart ? React.createElement(ChartCanvas, { type: "line", data: histChart, h: 280, options: { scales: { y: { title: { display: true, text: "SLI Value" } } } } }) : React.createElement(Empty, { title: "No history yet" })
+        )
+      ) : React.createElement(SCard, null, React.createElement(Empty, { title: "Select an SLO from the list", icon: "chart" }))
+    ),
+
+    // Breaches log
+    tab === "breaches" && React.createElement(SCard, null,
+      React.createElement(SHead, null, "SLO Breach History"),
+      React.createElement("div", { style: { overflowX: "auto" } },
+        React.createElement("table", null,
+          React.createElement("thead", null, React.createElement("tr", null,
+            React.createElement("th", null, "Timestamp"), React.createElement("th", null, "SLO"),
+            React.createElement("th", null, "SLI"), React.createElement("th", null, "Target"),
+            React.createElement("th", null, "Status")
+          )),
+          React.createElement("tbody", null, (breaches || []).map(function(b, i) {
+            return React.createElement("tr", { key: i },
+              React.createElement("td", { style: { fontSize: 11, color: C.muted } }, (b.timestamp || "").slice(0, 16).replace("T", " ")),
+              React.createElement("td", { style: { fontWeight: 600 } }, b.sloName),
+              React.createElement("td", { style: { color: C.red, fontWeight: 700 } }, b.sli != null ? b.sli.toFixed(4) : "--"),
+              React.createElement("td", { style: { fontFamily: "monospace", fontSize: 12 } }, b.operator + " " + b.target),
+              React.createElement("td", null, b.resolved ? React.createElement("span", { className: "pill-pass", style: { fontSize: 10 } }, "Resolved") : React.createElement("span", { className: "pill-fail", style: { fontSize: 10 } }, "Open"))
+            );
+          }))
+        )
+      ),
+      !(breaches && breaches.length) && React.createElement(Empty, { title: "No breaches recorded", icon: "OK", sub: "All SLOs are meeting their targets" })
+    ),
+
+    // Configure SLOs
+    tab === "configure" && React.createElement(React.Fragment, null,
+      React.createElement("div", { style: { display: "flex", justifyContent: "flex-end" } },
+        React.createElement(Btn, { onClick: function() { setShowCreate(function(s) { return !s; }); } }, showCreate ? "Cancel" : "+ New SLO")
+      ),
+      showCreate && React.createElement(SCard, null,
+        React.createElement(SHead, null, "Create SLO"),
+        React.createElement("div", { style: { padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } },
+          React.createElement("div", null, React.createElement(Lbl, null, "Name *"), React.createElement(Inp, { value: form.name, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { name: e.target.value }); }); } })),
+          React.createElement("div", null, React.createElement(Lbl, null, "Type"),
+            React.createElement(Sel, { value: form.type, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { type: e.target.value }); }); } },
+              SLO_TYPES.map(function(t) { return React.createElement("option", { key: t.v, value: t.v }, t.l); })
+            )
+          ),
+          (form.type === "metric_pass_rate" || form.type === "metric_avg_score") && React.createElement("div", null,
+            React.createElement(Lbl, null, "Metric Name"), React.createElement(Inp, { value: form.metric, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { metric: e.target.value }); }); }, placeholder: "e.g. Faithfulness" })
+          ),
+          (form.type === "latency_p95" || form.type === "latency_p99") && React.createElement("div", null,
+            React.createElement(Lbl, null, "Span Type"), React.createElement(Sel, { value: form.spanType, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { spanType: e.target.value }); }); } },
+              ["llm", "retriever", "tool", "agent", "base"].map(function(t) { return React.createElement("option", { key: t, value: t }, t); })
+            )
+          ),
+          React.createElement("div", null, React.createElement(Lbl, null, "Operator"),
+            React.createElement(Sel, { value: form.operator, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { operator: e.target.value }); }); } },
+              [">=", "<=", ">", "<"].map(function(o) { return React.createElement("option", { key: o, value: o }, o); })
+            )
+          ),
+          React.createElement("div", null, React.createElement(Lbl, null, "Target Value"), React.createElement(Inp, { type: "number", value: form.target, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { target: parseFloat(e.target.value) }); }); } })),
+          React.createElement("div", null, React.createElement(Lbl, null, "Window (last N runs)"), React.createElement(Inp, { type: "number", value: form.windowRuns, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { windowRuns: parseInt(e.target.value) }); }); } })),
+          React.createElement("div", { style: { gridColumn: "1/-1" } }, React.createElement(Btn, { onClick: createSlo }, "Create SLO"))
+        )
+      ),
+      React.createElement(SCard, null,
+        React.createElement(SHead, null, "All SLOs"),
+        sloLoad ? React.createElement(Loading, null) : React.createElement("table", null,
+          React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "Name"), React.createElement("th", null, "Type"), React.createElement("th", null, "Target"), React.createElement("th", null, "Window"), React.createElement("th", null, "Delete"))),
+          React.createElement("tbody", null, (sloList || []).map(function(s, i) {
+            return React.createElement("tr", { key: i },
+              React.createElement("td", { style: { fontWeight: 700 } }, s.name),
+              React.createElement("td", null, React.createElement("span", { className: "pill-info", style: { fontSize: 10 } }, s.type)),
+              React.createElement("td", { style: { fontFamily: "monospace", fontSize: 12 } }, s.operator + " " + s.target),
+              React.createElement("td", { style: { fontSize: 12 } }, s.windowRuns + " runs"),
+              React.createElement("td", null, React.createElement(Btn, { sm: true, v: "danger", onClick: function() { deleteSlo(s.id); } }, "X"))
+            );
+          }))
+        ),
+        !sloLoad && !(sloList && sloList.length) && React.createElement(Empty, { title: "No SLOs yet", sub: "Create one above or click Seed Defaults on the Status tab" })
+      )
+    )
+  );
+}
+
+/* ======================================================================
+   PROJECTS OVERVIEW PAGE
+====================================================================== */
+function ProjectsPage(props) {
+  var go = props.go;
+  var _d = useFetch("/api/projects", ["projs"]), projs = _d.data, loading = _d.loading;
+  var _sc = useState(false), showCfg = _sc[0], setShowCfg = _sc[1];
+  var _cf = useState({ id: "", name: "", color: "", description: "" }), cfgForm = _cf[0], setCfgForm = _cf[1];
+
+  function saveConfig() {
+    if (!cfgForm.id) { toast("Project ID required", "warn"); return; }
+    api.post("/api/projects/configure", cfgForm).then(function() { toast("Saved!"); setShowCfg(false); _d.reload(); });
+  }
+
+  var PROJECT_COLORS_LIST = ["#6366F1","#10B981","#F59E0B","#EC4899","#0891B2","#7C3AED","#E11D48","#84CC16"];
+
+  return React.createElement(PW, null,
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+      React.createElement("div", { style: { fontSize: 12, color: C.muted } }, "Projects are auto-detected from deepeval.log_hyperparameters(project=...) in your test runs"),
+      React.createElement(Btn, { sm: true, v: "outline", onClick: function() { setShowCfg(function(s) { return !s; }); } }, showCfg ? "Cancel" : "Configure Project")
+    ),
+
+    showCfg && React.createElement(SCard, null,
+      React.createElement(SHead, null, "Configure Project Display"),
+      React.createElement("div", { style: { padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } },
+        React.createElement("div", null, React.createElement(Lbl, null, "Project ID (must match hyperparameters.project)"), React.createElement(Inp, { value: cfgForm.id, onChange: function(e) { setCfgForm(function(f) { return Object.assign({}, f, { id: e.target.value }); }); }, placeholder: "rag-chatbot" })),
+        React.createElement("div", null, React.createElement(Lbl, null, "Display Name"), React.createElement(Inp, { value: cfgForm.name, onChange: function(e) { setCfgForm(function(f) { return Object.assign({}, f, { name: e.target.value }); }); }, placeholder: "RAG Chatbot" })),
+        React.createElement("div", null, React.createElement(Lbl, null, "Color"),
+          React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 4 } },
+            PROJECT_COLORS_LIST.map(function(col) {
+              return React.createElement("button", { key: col, onClick: function() { setCfgForm(function(f) { return Object.assign({}, f, { color: col }); }); },
+                style: { width: 28, height: 28, borderRadius: "50%", background: col, border: cfgForm.color === col ? "3px solid white" : "2px solid transparent", cursor: "pointer" } });
+            })
+          )
+        ),
+        React.createElement("div", null, React.createElement(Lbl, null, "Description"), React.createElement(Inp, { value: cfgForm.description, onChange: function(e) { setCfgForm(function(f) { return Object.assign({}, f, { description: e.target.value }); }); } })),
+        React.createElement("div", { style: { gridColumn: "1/-1" } }, React.createElement(Btn, { onClick: saveConfig }, "Save Configuration"))
+      )
+    ),
+
+    loading ? React.createElement(Loading, null) : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 14 } },
+      (projs || []).map(function(p, i) {
+        var color = p.color || "#6366F1";
+        var total = p.passed + p.failed;
+        var pr    = total > 0 ? p.passRate : null;
+        var prColor = pr == null ? C.muted : pr >= 0.8 ? C.teal : pr >= 0.5 ? C.amber : C.red;
+        return React.createElement("div", { key: i, className: "scard fade-in", style: { cursor: "pointer" }, onClick: function() { go("runs", { project: p.id }); } },
+          React.createElement("div", { style: { height: 4, background: color } }),
+          React.createElement("div", { style: { padding: "14px 16px" } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
+              React.createElement("div", { style: { width: 12, height: 12, borderRadius: "50%", background: color, flexShrink: 0 } }),
+              React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: C.text } }, p.name || p.id),
+              p.source === "auto" && React.createElement("span", { style: { fontSize: 9, color: C.muted, background: C.borderSoft, padding: "1px 5px", borderRadius: 4 } }, "auto")
+            ),
+            p.description && React.createElement("div", { style: { fontSize: 11, color: C.muted, marginBottom: 8 } }, p.description),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 } },
+              React.createElement("div", { style: { textAlign: "center" } },
+                React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: C.text } }, p.runCount),
+                React.createElement("div", { style: { fontSize: 10, color: C.muted } }, "Runs")
+              ),
+              React.createElement("div", { style: { textAlign: "center" } },
+                React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: prColor } }, pr != null ? (pr * 100).toFixed(0) + "%" : "--"),
+                React.createElement("div", { style: { fontSize: 10, color: C.muted } }, "Pass Rate")
+              ),
+              React.createElement("div", { style: { textAlign: "center" } },
+                React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: C.text } }, p.lastRun ? p.lastRun.slice(5, 10) : "--"),
+                React.createElement("div", { style: { fontSize: 10, color: C.muted } }, "Last Run")
+              )
+            ),
+            React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 6 } },
+              React.createElement(Btn, { sm: true, v: "outline", onClick: function(e) { e.stopPropagation(); go("runs", { project: p.id }); } }, "Runs"),
+              React.createElement(Btn, { sm: true, v: "ghost", onClick: function(e) { e.stopPropagation(); go("metrics", { project: p.id }); } }, "Metrics"),
+              React.createElement(Btn, { sm: true, v: "ghost", onClick: function(e) { e.stopPropagation(); go("bugs", { project: p.id }); } }, "Bugs")
+            )
+          )
+        );
+      })
+    ),
+
+    !loading && !(projs && projs.length) && React.createElement(Empty, {
+      title: "No projects detected",
+      sub: "Tag your runs with: deepeval.log_hyperparameters(project='my-bot', ...)",
+      icon: "P"
+    })
+  );
+}
+
+
+/* --- BENCHMARKS PAGE ---------------------------------------------------- */
+function BenchmarksPage() {
+  var _d   = useFetch("/api/benchmarks", ["benches"]), data = _d.data, loading = _d.loading, reload = _d.reload;
+  var _sum = useFetch("/api/benchmarks/summary", ["bsum"]), summ = _sum.data;
+  var _nm  = useFetch("/api/benchmarks/names", ["bnm"]), names = _nm.data;
+  var _sc  = useState(false), showAdd = _sc[0], setShowAdd = _sc[1];
+  var _f   = useState({ benchmark: "MMLU", model: "", score: 0, tasks: "", correct: "", notes: "" });
+  var form = _f[0], setForm = _f[1];
+  var _tab = useState("results"), tab = _tab[0], setTab = _tab[1];
+
+  function addResult() {
+    if (!form.model || !form.score) { toast("Model and score required", "warn"); return; }
+    api.post("/api/benchmarks", {
+      benchmark: form.benchmark, model: form.model, score: parseFloat(form.score),
+      tasks: form.tasks ? parseInt(form.tasks) : null, correct: form.correct ? parseInt(form.correct) : null,
+      notes: form.notes,
+    }).then(function() { toast("Result saved!"); setShowAdd(false); reload(); });
+  }
+
+  var summData = summ || [];
+  var summChart = summData.length ? {
+    labels: summData.map(function(s) { return s.benchmark; }),
+    datasets: [{
+      label: "Best Score",
+      data: summData.map(function(s) { return +(s.best || 0).toFixed(3); }),
+      backgroundColor: summData.map(function(_, i) { return [C.primary,C.teal,C.amber,C.purple,C.red,"#0EA5E9","#84CC16","#EC4899"][i % 8]; }),
+      borderRadius: 5,
+    }]
+  } : null;
+
+  return React.createElement(PW, null,
+    React.createElement("div", { className: "tab-bar" },
+      ["results","summary","add"].map(function(t) {
+        return React.createElement("div", { key: t, className: "tab" + (tab === t ? " on" : ""), onClick: function() { setTab(t); }, style: { textTransform: "capitalize" } }, t);
+      })
+    ),
+
+    tab === "results" && React.createElement(React.Fragment, null,
+      React.createElement(SCard, null,
+        React.createElement(SHead, { action: React.createElement(Btn, { sm: true, onClick: function() { setTab("add"); } }, "+ Add Result") }, "Benchmark Results"),
+        loading ? React.createElement(Loading, null) : React.createElement("div", { style: { overflowX: "auto" } },
+          React.createElement("table", null,
+            React.createElement("thead", null, React.createElement("tr", null,
+              React.createElement("th", null, "Benchmark"), React.createElement("th", null, "Model"),
+              React.createElement("th", null, "Score"), React.createElement("th", null, "Tasks"),
+              React.createElement("th", null, "Accuracy"), React.createElement("th", null, "Notes"),
+              React.createElement("th", null, "Date"), React.createElement("th", null, "Delete")
+            )),
+            React.createElement("tbody", null, (data || []).map(function(r, i) {
+              var scoreColor = (r.score || 0) >= 0.8 ? C.teal : (r.score || 0) >= 0.5 ? C.amber : C.red;
+              return React.createElement("tr", { key: i },
+                React.createElement("td", { style: { fontWeight: 700 } }, r.benchmark),
+                React.createElement("td", { style: { fontFamily: "monospace", fontSize: 12 } }, r.model),
+                React.createElement("td", null, React.createElement("span", { style: { fontWeight: 700, color: scoreColor } }, ((r.score || 0) * 100).toFixed(1) + "%")),
+                React.createElement("td", { style: { fontSize: 12, color: C.muted } }, r.tasks || "--"),
+                React.createElement("td", { style: { fontSize: 12 } }, r.accuracy ? ((r.accuracy) * 100).toFixed(1) + "%" : "--"),
+                React.createElement("td", { style: { fontSize: 12, color: C.muted, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, r.notes || "--"),
+                React.createElement("td", { style: { fontSize: 11, color: C.muted } }, (r.timestamp || "").slice(0, 10)),
+                React.createElement("td", null, React.createElement(Btn, { sm: true, v: "danger", onClick: function() { api.del("/api/benchmarks/" + r.id).then(function() { reload(); }); } }, "X"))
+              );
+            }))
+          )
+        ),
+        !loading && !(data && data.length) && React.createElement(Empty, {
+          title: "No benchmark results yet",
+          sub: "Add results manually or run: deepeval benchmark ARC --model gpt-4o",
+          icon: "B"
+        })
+      )
+    ),
+
+    tab === "summary" && React.createElement(React.Fragment, null,
+      summChart && React.createElement(SCard, null,
+        React.createElement(SHead, null, "Best Score per Benchmark"),
+        React.createElement("div", { style: { padding: 14 } }, React.createElement(ChartCanvas, { type: "bar", data: summChart, h: 250, options: { scales: { y: { min: 0, max: 1, ticks: { callback: function(v) { return (v * 100) + "%"; } } } }, plugins: { legend: { display: false } } } }))
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 12 } },
+        summData.map(function(s, i) {
+          var col = [C.primary,C.teal,C.amber,C.purple,C.red,"#0EA5E9"][i % 6];
+          return React.createElement(SCard, { key: i },
+            React.createElement("div", { style: { height: 3, background: col } }),
+            React.createElement("div", { style: { padding: "12px 14px" } },
+              React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 6 } }, s.benchmark),
+              React.createElement("div", { style: { fontSize: 28, fontWeight: 800, color: col } }, s.best != null ? ((s.best) * 100).toFixed(1) + "%" : "--"),
+              React.createElement("div", { style: { fontSize: 11, color: C.muted } }, "Best: " + (s.bestModel || "--") + " | " + s.results.length + " result" + (s.results.length !== 1 ? "s" : ""))
+            )
+          );
+        })
+      ),
+      !summData.length && React.createElement(Empty, { title: "No benchmark data", icon: "B" })
+    ),
+
+    tab === "add" && React.createElement(SCard, null,
+      React.createElement(SHead, null, "Add Benchmark Result"),
+      React.createElement("div", { style: { padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } },
+        React.createElement("div", null, React.createElement(Lbl, null, "Benchmark"),
+          React.createElement(Sel, { value: form.benchmark, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { benchmark: e.target.value }); }); } },
+            (names || []).map(function(n) { return React.createElement("option", { key: n, value: n }, n); })
+          )
+        ),
+        React.createElement("div", null, React.createElement(Lbl, null, "Model *"), React.createElement(Inp, { value: form.model, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { model: e.target.value }); }); }, placeholder: "gpt-4o, claude-3-opus, ..." })),
+        React.createElement("div", null, React.createElement(Lbl, null, "Score (0-1) *"), React.createElement("input", { type: "number", min: 0, max: 1, step: 0.001, value: form.score, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { score: e.target.value }); }); }, style: { width: "100%", padding: "7px 11px", border: "1.5px solid " + C.border, borderRadius: 8, background: C.bg, color: C.text, fontSize: 13 } })),
+        React.createElement("div", null, React.createElement(Lbl, null, "Total Tasks"), React.createElement(Inp, { type: "number", value: form.tasks, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { tasks: e.target.value }); }); }, placeholder: "1172" })),
+        React.createElement("div", null, React.createElement(Lbl, null, "Correct"), React.createElement(Inp, { type: "number", value: form.correct, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { correct: e.target.value }); }); }, placeholder: "937" })),
+        React.createElement("div", null, React.createElement(Lbl, null, "Notes"), React.createElement(Inp, { value: form.notes, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { notes: e.target.value }); }); }, placeholder: "zero-shot, CoT..." })),
+        React.createElement("div", { style: { gridColumn: "1/-1" } },
+          React.createElement(Btn, { onClick: addResult }, "Save Benchmark Result"),
+          React.createElement("div", { style: { marginTop: 12, fontSize: 11, color: C.muted } },
+            "Tip: You can also run deepeval benchmarks directly and upload the result JSON:",
+            React.createElement("br", null),
+            React.createElement("code", { style: { fontSize: 10, background: C.bg, padding: "2px 6px", borderRadius: 4, display: "inline-block", marginTop: 4 } },
+              "deepeval benchmark run --benchmark ARC --model gpt-4o"
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+
+/* --- ACTIVITY HEATMAP (GitHub-style calendar) --------------------------- */
+function ActivityHeatmap(props) {
+  var dailyData = props.data || [];
+  // Build date->count map
+  var dateMap = {};
+  dailyData.forEach(function(d) { dateMap[d.date] = d.runs || 0; });
+
+  var weeks = 26;
+  var cells = [];
+  var today = new Date();
+  for (var i = weeks * 7 - 1; i >= 0; i--) {
+    var d = new Date(today);
+    d.setDate(today.getDate() - i);
+    var dateStr = d.toISOString().slice(0, 10);
+    var count = dateMap[dateStr] || 0;
+    var weekCol = Math.floor(i / 7);
+    var dayRow  = 6 - (i % 7);
+    cells.push({ date: dateStr, count: count, col: weeks - 1 - weekCol, row: dayRow });
+  }
+  var maxCount = Math.max.apply(null, cells.map(function(c) { return c.count; }).concat([1]));
+  var CS = 12, GAP = 3;
+  var W = weeks * (CS + GAP);
+  var H = 7 * (CS + GAP);
+
+  var MONTH_LABELS = [];
+  var seenMonths = {};
+  cells.forEach(function(c) {
+    var mo = c.date.slice(0, 7);
+    if (!seenMonths[mo] && c.row === 0) {
+      seenMonths[mo] = true;
+      MONTH_LABELS.push({ label: c.date.slice(5, 7) + "/" + c.date.slice(2, 4), col: c.col });
+    }
+  });
+
+  return React.createElement("div", null,
+    React.createElement("svg", { width: W + 30, height: H + 24, style: { overflow: "visible" } },
+      // Month labels
+      MONTH_LABELS.map(function(ml, i) {
+        return React.createElement("text", { key: i, x: ml.col * (CS + GAP), y: H + 16, fontSize: 9, fill: C.muted }, ml.label);
+      }),
+      // Day labels
+      ["Su","Mo","Tu","We","Th","Fr","Sa"].map(function(day, r) {
+        return React.createElement("text", { key: r, x: W + 4, y: r * (CS + GAP) + CS, fontSize: 9, fill: C.muted }, day);
+      }),
+      // Cells
+      cells.map(function(cell, i) {
+        var intensity = cell.count === 0 ? 0 : 0.2 + 0.8 * (cell.count / maxCount);
+        var fillColor = cell.count === 0 ? C.borderSoft : "rgba(99,102,241," + intensity.toFixed(2) + ")";
+        return React.createElement("rect", {
+          key: i,
+          x: cell.col * (CS + GAP), y: cell.row * (CS + GAP),
+          width: CS, height: CS, rx: 2,
+          fill: fillColor,
+          style: { cursor: "pointer" },
+          onClick: function() { toast(cell.date + ": " + cell.count + " run" + (cell.count !== 1 ? "s" : "")); }
+        },
+          React.createElement("title", null, cell.date + ": " + cell.count + " run" + (cell.count !== 1 ? "s" : ""))
+        );
+      })
+    ),
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 10, color: C.muted } },
+      "Less",
+      [0, 0.25, 0.5, 0.75, 1].map(function(v, i) {
+        return React.createElement("div", { key: i, style: { width: 11, height: 11, borderRadius: 2, background: v === 0 ? C.borderSoft : "rgba(99,102,241," + (0.2 + 0.8 * v).toFixed(2) + ")" } });
+      }),
+      "More"
+    )
+  );
+}
+
+
+/* --- CUSTOM DASHBOARD BUILDER ------------------------------------------- */
+function CustomDashPage() {
+  var _ws = useState(function() {
+    try { return JSON.parse(localStorage.getItem("de_custom_dash") || "[]"); } catch(e) { return []; }
+  }), widgets = _ws[0], setWidgets = _ws[1];
+  var _sc = useState(false), showAdd = _sc[0], setShowAdd = _sc[1];
+  var _f  = useState({ type: "metric_trend", metric: "Faithfulness", title: "", size: "half" });
+  var form = _f[0], setForm = _f[1];
+
+  function save(newWidgets) {
+    setWidgets(newWidgets);
+    localStorage.setItem("de_custom_dash", JSON.stringify(newWidgets));
+  }
+
+  function addWidget() {
+    var w = Object.assign({}, form, { id: Date.now().toString() });
+    save(widgets.concat([w]));
+    setShowAdd(false);
+  }
+
+  function removeWidget(id) { save(widgets.filter(function(w) { return w.id !== id; })); }
+  function moveUp(i)   { if (i === 0) return; var a = widgets.slice(); var t = a[i]; a[i] = a[i-1]; a[i-1] = t; save(a); }
+  function moveDown(i) { if (i >= widgets.length-1) return; var a = widgets.slice(); var t = a[i]; a[i] = a[i+1]; a[i+1] = t; save(a); }
+
+  return React.createElement(PW, null,
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+      React.createElement("div", { style: { fontSize: 12, color: C.muted } }, "Build your own dashboard with custom chart widgets. Layout saved in browser."),
+      React.createElement("div", { style: { display: "flex", gap: 8 } },
+        React.createElement(Btn, { sm: true, v: "ghost", onClick: function() { if(confirm("Clear all widgets?")) save([]); } }, "Clear All"),
+        React.createElement(Btn, { sm: true, onClick: function() { setShowAdd(function(s) { return !s; }); } }, showAdd ? "Cancel" : "+ Add Widget")
+      )
+    ),
+
+    showAdd && React.createElement(SCard, null,
+      React.createElement(SHead, null, "Add Widget"),
+      React.createElement("div", { style: { padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 } },
+        React.createElement("div", null, React.createElement(Lbl, null, "Widget Type"),
+          React.createElement(Sel, { value: form.type, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { type: e.target.value }); }); } },
+            [
+              { v: "metric_trend",     l: "Metric Score Trend (Line)" },
+              { v: "pass_rate_trend",  l: "Pass Rate Trend (Line)" },
+              { v: "cost_trend",       l: "Cost Per Run (Bar)" },
+              { v: "latency_chart",    l: "Latency P95 (Bar)" },
+              { v: "score_dist",       l: "Score Distribution (Bar)" },
+              { v: "stat_total_runs",  l: "Stat: Total Runs" },
+              { v: "stat_pass_rate",   l: "Stat: Overall Pass Rate" },
+              { v: "stat_total_cost",  l: "Stat: Total Cost" },
+            ].map(function(o) { return React.createElement("option", { key: o.v, value: o.v }, o.l); })
+          )
+        ),
+        React.createElement("div", null, React.createElement(Lbl, null, "Metric (for metric widgets)"),
+          React.createElement(Inp, { value: form.metric, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { metric: e.target.value }); }); }, placeholder: "Faithfulness" })
+        ),
+        React.createElement("div", null, React.createElement(Lbl, null, "Custom Title"),
+          React.createElement(Inp, { value: form.title, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { title: e.target.value }); }); }, placeholder: "optional" })
+        ),
+        React.createElement("div", null, React.createElement(Lbl, null, "Width"),
+          React.createElement(Sel, { value: form.size, onChange: function(e) { setForm(function(f) { return Object.assign({}, f, { size: e.target.value }); }); } },
+            React.createElement("option", { value: "full" }, "Full width"),
+            React.createElement("option", { value: "half" }, "Half width"),
+            React.createElement("option", { value: "third" }, "One-third")
+          )
+        ),
+        React.createElement("div", { style: { gridColumn: "1/-1" } }, React.createElement(Btn, { onClick: addWidget }, "Add Widget"))
+      )
+    ),
+
+    !widgets.length && React.createElement(Empty, { title: "No widgets yet", sub: "Click '+ Add Widget' to build your custom dashboard", icon: "D" }),
+
+    widgets.length > 0 && React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } },
+      widgets.map(function(w, i) {
+        return React.createElement(CustomWidget, {
+          key: w.id, widget: w, index: i, total: widgets.length,
+          onRemove: function() { removeWidget(w.id); },
+          onUp: function() { moveUp(i); },
+          onDown: function() { moveDown(i); },
+          style: { gridColumn: w.size === "full" ? "1/-1" : w.size === "third" ? "span 1" : "span 1" }
+        });
+      })
+    )
+  );
+}
+
+function CustomWidget(props) {
+  var w = props.widget;
+  var title = w.title || ({ metric_trend: "Metric: " + w.metric, pass_rate_trend: "Pass Rate Trend", cost_trend: "Cost Per Run", latency_chart: "Latency P95", score_dist: "Score Distribution: " + w.metric, stat_total_runs: "Total Runs", stat_pass_rate: "Overall Pass Rate", stat_total_cost: "Total Cost" }[w.type] || w.type);
+
+  var _d = useFetch(
+    w.type === "metric_trend" || w.type === "pass_rate_trend" ? "/api/metrics/trends" :
+    w.type === "cost_trend" ? "/api/cost/trends" :
+    w.type === "latency_chart" ? "/api/latency/percentiles" :
+    w.type === "score_dist" ? "/api/metrics/distribution/" + w.metric :
+    "/api/dashboard",
+    ["cw_" + w.id]
+  );
+  var d = _d.data;
+
+  var chartData = null;
+  if (w.type === "metric_trend" && d) {
+    var filtered = d.filter(function(t) { return t.metric === w.metric; });
+    chartData = { labels: filtered.map(function(t) { return (t.datetime||"").slice(5,16); }), datasets: [{ label: w.metric, data: filtered.map(function(t) { return +(t.avg||0).toFixed(3); }), borderColor: C.primary, backgroundColor: C.primarySoft, tension: 0.4, fill: true }] };
+  } else if (w.type === "pass_rate_trend" && d) {
+    var uniq = []; var seen = {};
+    d.forEach(function(t) { if (!seen[t.datetime + t.metric]) { seen[t.datetime + t.metric] = 1; uniq.push(t); } });
+    chartData = { labels: uniq.map(function(t) { return (t.datetime||"").slice(5,16); }), datasets: [{ label: "Pass Rate", data: uniq.map(function(t) { return +(t.passRate||0).toFixed(3); }), borderColor: C.teal, tension: 0.4, fill: false }] };
+  } else if (w.type === "cost_trend" && d) {
+    chartData = { labels: d.map(function(r) { return (r.datetime||"").slice(5,16); }), datasets: [{ label: "Cost ($)", data: d.map(function(r) { return +(r.cost||0).toFixed(4); }), backgroundColor: C.amber + "99", borderRadius: 4 }] };
+  } else if (w.type === "latency_chart" && d) {
+    var types = Object.keys(d);
+    chartData = { labels: types.map(function(t) { return t.toUpperCase(); }), datasets: [{ label: "P95 (ms)", data: types.map(function(t) { return d[t].p95; }), backgroundColor: C.primary + "99", borderRadius: 4 }] };
+  } else if (w.type === "score_dist" && d) {
+    chartData = { labels: d.map(function(b) { return b.label; }), datasets: [{ label: "Count", data: d.map(function(b) { return b.count; }), backgroundColor: C.primary + "99", borderRadius: 4 }] };
+  }
+
+  var statValue = null;
+  if (w.type === "stat_total_runs" && d) statValue = d.totalRuns;
+  else if (w.type === "stat_pass_rate" && d) statValue = d.overallPassRate != null ? (d.overallPassRate * 100).toFixed(1) + "%" : "--";
+  else if (w.type === "stat_total_cost" && d) statValue = d.totalCost != null ? "$" + d.totalCost.toFixed(4) : "--";
+
+  return React.createElement("div", { className: "scard", style: Object.assign({ gridColumn: w.size === "full" ? "1/-1" : "" }, props.style || {}) },
+    React.createElement("div", { className: "shead" },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: C.text } },
+        React.createElement("div", { style: { width: 3, height: 16, background: C.primaryGrad, borderRadius: 3 } }),
+        title
+      ),
+      React.createElement("div", { style: { display: "flex", gap: 4 } },
+        props.index > 0 && React.createElement("button", { onClick: props.onUp, style: { background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 14 } }, "^"),
+        props.index < props.total - 1 && React.createElement("button", { onClick: props.onDown, style: { background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 14 } }, "v"),
+        React.createElement(Btn, { sm: true, v: "danger", onClick: props.onRemove }, "X")
+      )
+    ),
+    React.createElement("div", { style: { padding: 14 } },
+      statValue != null ? React.createElement("div", { style: { fontSize: 36, fontWeight: 800, color: C.text, letterSpacing: "-.03em" } }, statValue) :
+      chartData ? React.createElement(ChartCanvas, { type: ["cost_trend","latency_chart","score_dist"].includes(w.type) ? "bar" : "line", data: chartData, h: 180 }) :
+      React.createElement(Empty, { title: "No data", icon: "D" })
+    )
+  );
+}
+
+/* ─── APP + ROUTER ───────────────────────────────────────────────────────── */
+var TITLES = {dash:"Dashboard",runs:"Test Runs",run:"Run Detail",case:"Test Case",traces:"Trace Viewer",bugs:"Bug Dashboard",metrics:"Metrics & Analytics",latency:"Latency",cost:"Cost & Tokens",usage:"Usage",compare:"Compare Runs",sessions:"Sessions",users:"Users",queues:"Annotation Queues",anns:"Annotations",evals:"Online Evaluators",autos:"Automation Rules",hooks:"Webhooks",datasets:"Datasets",prompts:"Prompt Hub",playground:"Playground",settings:"Settings",sla:"SLA Dashboard",projects:"Projects",benchmarks:"Benchmarks",customdash:"Custom Dashboard"};
+
+function App() {
+  var _nav=useState({p:"dash",rf:null,cn:null}),nav=_nav[0],setNav=_nav[1];
+  var _env=useState("all"),env=_env[0],setEnv=_env[1];
+  var _ver=useState("all"),ver=_ver[0],setVer=_ver[1];
+  var _auth=useState(null),authed=_auth[0],setAuthed=_auth[1];
+  var _themeId=useState(_themeId||"dark"),themeId=_themeId[0];
+  _themeForceUpdate = _themeId[1];
+
+  useEffect(function(){
+    window._logout = function(){setAuthed(false);};
+    api.get("/api/auth/status").then(function(d){
+      if(!d){setAuthed(false);return;}
+      if(!d.enabled||d.authenticated){var u=localStorage.getItem("de_usr");setAuthed(u?JSON.parse(u):{username:"admin",role:"admin"});}
+      else setAuthed(false);
+    });
+  },[]);
+
+  var _envs=useFetch("/api/runs/envs",["envs"]),envList=_envs.data;
+  var _vers=useFetch("/api/runs/versions",["vers"]),verList=_vers.data;
+  var _projs=useFetch("/api/projects/ids",["projids"]),projList=_projs.data;
+  var _proj=useState("all"),proj=_proj[0],setProj=_proj[1];
+
+  function go(p,extra){setNav(Object.assign({p:p,rf:null,cn:null,project:null},extra||{}));}
+  function logout(){api.post("/api/auth/logout",{}).then(function(){clearTok();setAuthed(false);toast("Logged out");});}
+
+  if(authed===null) return React.createElement("div",{style:{display:"flex",height:"100vh",alignItems:"center",justifyContent:"center",background:C.bg,color:C.muted,fontSize:14}},"Checking authentication...");
+  if(authed===false) return React.createElement(ToastProvider,null,React.createElement(LoginPage,{onLogin:function(d){setAuthed(d);}}));
+
+  var PAGES = {
+    dash:      function(){return React.createElement(DashPage,{go:go,env:env,ver:ver,proj:proj});},
+    runs:      function(){return React.createElement(RunsPage,{go:go,env:env,ver:ver,proj:nav.project||proj});},
+    run:       function(){return React.createElement(RunPage,{go:go,rf:nav.rf});},
+    case:      function(){return React.createElement(CasePage,{go:go,rf:nav.rf,cn:nav.cn});},
+    traces:    function(){return React.createElement(TracesPage,{go:go});},
+    bugs:      function(){return React.createElement(BugsPage,{go:go,rf:nav.rf});},
+    metrics:   function(){return React.createElement(MetricsPage,{env:env,ver:ver});},
+    latency:   function(){return React.createElement(LatencyPage,null);},
+    cost:      function(){return React.createElement(CostPage,null);},
+    usage:     function(){return React.createElement(UsagePage,null);},
+    compare:   function(){return React.createElement(ComparePage,null);},
+    sessions:  function(){return React.createElement(SessionsPage,null);},
+    users:     function(){return React.createElement(UsersPage,null);},
+    queues:    function(){return React.createElement(QueuesPage,null);},
+    anns:      function(){return React.createElement(AnnsPage,null);},
+    evals:     function(){return React.createElement(EvalsPage,null);},
+    autos:     function(){return React.createElement(AutosPage,null);},
+    hooks:     function(){return React.createElement(HooksPage,null);},
+    datasets:  function(){return React.createElement(DatasetsPage,null);},
+    prompts:   function(){return React.createElement(PromptsPage,null);},
+    playground:function(){return React.createElement(PlaygroundPage,null);},
+    settings:  function(){return React.createElement(SettingsPage,null);},
+    sla:       function(){return React.createElement(SLAPage,null);},
+    projects:  function(){return React.createElement(ProjectsPage,{go:go});},
+    benchmarks:function(){return React.createElement(BenchmarksPage,null);},
+    customdash:function(){return React.createElement(CustomDashPage,null);}
+  };
+  var pageF = PAGES[nav.p] || PAGES.dash;
+
+  return React.createElement(ToastProvider,null,
+    React.createElement("div",{style:{display:"flex",height:"100vh",overflow:"hidden",background:C.bg}},
+      React.createElement(Sidebar,{active:nav.p,go:go}),
+      React.createElement("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
+        React.createElement(Topbar,{title:TITLES[nav.p]||"Dashboard",sub:nav.rf?nav.rf.slice(9,26)+"...":null,envs:envList||[],vers:verList||[],env:env,setEnv:setEnv,ver:ver,setVer:setVer,projs:projList||[],proj:proj,setProj:setProj,user:authed,onLogout:logout}),
+        React.createElement("div",{key:nav.p+(nav.rf||"")+(nav.cn||""),style:{flex:1,overflowY:"auto",background:C.bg},className:"fade-in"},pageF())
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App,null));
+
+</script>
+</body>
+</html>
