@@ -14,13 +14,14 @@ router = APIRouter(prefix="/api/runs", tags=["runs"])
 
 @router.get("")
 def list_runs(
-    env:     Optional[str] = None,
-    version: Optional[str] = None,
-    project: Optional[str] = None,
-    status:  Optional[str] = None,
-    search:  Optional[str] = None,
-    page:    int = Query(1, ge=1),
-    limit:   int = Query(25, ge=1, le=100),
+    env:       Optional[str] = None,
+    version:   Optional[str] = None,
+    project:   Optional[str] = None,
+    framework: Optional[str] = None,
+    status:    Optional[str] = None,
+    search:    Optional[str] = None,
+    page:      int = Query(1, ge=1),
+    limit:     int = Query(25, ge=1, le=100),
 ):
     summaries = get_all_summaries()
 
@@ -30,6 +31,8 @@ def list_runs(
         summaries = [r for r in summaries if r["version"] == version]
     if project and project != "all":
         summaries = [r for r in summaries if r.get("project") == project]
+    if framework and framework != "all":
+        summaries = [r for r in summaries if r.get("framework") == framework]
     if status == "pass":
         summaries = [r for r in summaries if r["passRate"] >= 1.0]
     elif status == "fail":
@@ -68,21 +71,23 @@ def get_run_summary(filename: str):
     if not run:
         raise HTTPException(404, f"Run '{filename}' not found")
     return {
-        "filename":      run["_filename"],
-        "datetime":      run["_datetime"],
-        "environment":   run["_environment"],
-        "version":       run["_version"],
-        "testPassed":    run["testPassed"],
-        "testFailed":    run["testFailed"],
-        "passRate":      run["_passRate"],
-        "errorRate":     run["_errorRate"],
-        "runDuration":   run["runDuration"],
+        "filename":       run["_filename"],
+        "datetime":       run["_datetime"],
+        "environment":    run["_environment"],
+        "version":        run["_version"],
+        "framework":      run.get("_framework", "ragas"),
+        "evaluatorLabel": run.get("_evaluatorLabel", "RAGAS Evaluator"),
+        "testPassed":     run["testPassed"],
+        "testFailed":     run["testFailed"],
+        "passRate":       run["_passRate"],
+        "errorRate":      run["_errorRate"],
+        "runDuration":    run["runDuration"],
         "evaluationCost": run["evaluationCost"],
-        "metricsScores": run["metricsScores"],
+        "metricsScores":  run["metricsScores"],
         "hyperparameters": run.get("hyperparameters"),
-        "identifier":    run.get("identifier"),
-        "datasetAlias":  run.get("datasetAlias"),
-        "hasTraces":     run["_hasTraces"],
+        "identifier":     run.get("identifier"),
+        "datasetAlias":   run.get("datasetAlias"),
+        "hasTraces":      run["_hasTraces"],
     }
 
 

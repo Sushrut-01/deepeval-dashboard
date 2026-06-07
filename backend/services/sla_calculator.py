@@ -87,6 +87,33 @@ def compute_sli(slo: dict, runs: List[dict]) -> Optional[float]:
         f = sum(r.get("testFailed", 0) for r in recent)
         return round(p / (p + f), 4) if (p + f) else None
 
+    if stype == "loadtest_apdex":
+        # Apdex from load test runs only (T=3000ms, 4T=12000ms)
+        lt_runs = [r for r in recent if (r.get("_filename") or "").startswith("test_run_loadtest_")]
+        if not lt_runs:
+            return None
+        durations = []
+        for run in lt_runs:
+            for span in get_all_spans_from_run(run):
+                d = _span_duration_ms(span)
+                if d is not None:
+                    durations.append(d)
+        if not durations:
+            return None
+        t_ms = 3000.0
+        satisfied  = sum(1 for l in durations if l <= t_ms)
+        tolerating = sum(1 for l in durations if t_ms < l <= 4 * t_ms)
+        return round((satisfied + tolerating * 0.5) / len(durations), 3)
+
+    if stype == "loadtest_failure_rate":
+        # Failure rate from load test runs only (testFailed / total)
+        lt_runs = [r for r in recent if (r.get("_filename") or "").startswith("test_run_loadtest_")]
+        if not lt_runs:
+            return None
+        p = sum(r.get("testPassed", 0) for r in lt_runs)
+        f = sum(r.get("testFailed", 0) for r in lt_runs)
+        return round(f / (p + f), 4) if (p + f) else None
+
     return None
 
 

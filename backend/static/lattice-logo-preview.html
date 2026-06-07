@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Lattice — Logo Preview</title>
+<style>
+  body{margin:0;padding:40px;background:#0b1120;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#F9FAFB;}
+  h1{font-size:20px;font-weight:700;margin:0 0 28px;color:#F9FAFB;}
+  .row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;}
+  .card{background:#111827;border:1px solid #374151;border-radius:16px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;}
+  .card span{font-size:13px;color:#9CA3AF;letter-spacing:.05em;}
+  img{display:block;}
+  .dark{background:#111827;}
+  .light{background:#FFFBEB;border-radius:12px;padding:14px;}
+</style>
+</head>
+<body>
+  <h1>Lattice — Logo Options</h1>
+  <div class="row">
+    <div class="card">
+      <img src="lattice-logo.svg" width="160" height="160"/>
+      <span>MARK · 160px</span>
+    </div>
+    <div class="card">
+      <img src="lattice-logo.svg" width="64" height="64"/>
+      <span>MARK · 64px (sidebar / favicon size)</span>
+    </div>
+    <div class="card">
+      <img src="lattice-logo.svg" width="32" height="32"/>
+      <span>MARK · 32px (favicon size)</span>
+    </div>
+    <div class="card" style="min-width:460px;">
+      <img src="lattice-wordmark.svg" width="420" height="120"/>
+      <span>WORDMARK · header lockup</span>
+    </div>
+    <div class="card light" style="min-width:460px;">
+      <img src="lattice-wordmark-light.svg" width="420" height="120"/>
+      <span style="color:#78716C;">WORDMARK · light-theme variant (dark text)</span>
+    </div>
+  </div>
+</body>
+</html>

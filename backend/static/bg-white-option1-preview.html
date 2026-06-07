@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Lattice — Option 1: White Canvas + Dark Cards</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+  body{display:flex;}
+
+  /* ───── sidebar (kept dark, unchanged from current) ───── */
+  .sidebar{width:218px;flex-shrink:0;background:rgba(8,10,16,.94);display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.07);}
+  .sb-head{padding:16px 16px 14px;background:linear-gradient(160deg,#111827,#0a0f1a);border-bottom:1px solid rgba(255,255,255,.07);}
+  .sb-brand{display:flex;align-items:center;gap:10px;}
+  .sb-mark{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#1F2937,#111827);border:1px solid #374151;display:flex;align-items:center;justify-content:center;font-size:14px;color:#818CF8;font-weight:800;}
+  .sb-name{color:#F9FAFB;font-size:17px;font-weight:700;letter-spacing:-.02em;line-height:1.1;}
+  .sb-tag{color:#9CA3AF;font-size:9px;letter-spacing:.18em;margin-top:2px;}
+  .sb-group{font-size:9px;color:rgba(255,255,255,.32);letter-spacing:.15em;padding:14px 16px 5px;font-weight:700;text-transform:uppercase;}
+  .sb-item{display:flex;align-items:center;gap:9px;padding:7px 12px 7px 14px;margin:1px 8px;border-radius:7px;font-size:12px;color:rgba(255,255,255,.6);position:relative;}
+  .sb-item .ic{width:16px;text-align:center;font-size:12px;color:rgba(255,255,255,.42);}
+  .sb-item.active{background:rgba(99,102,241,.13);border:1px solid rgba(129,140,248,.28);color:#C7D2FE;font-weight:600;}
+  .sb-item.active .ic{color:#C7D2FE;}
+  .sb-item.active::before{content:"";position:absolute;left:-8px;top:24%;bottom:24%;width:3px;border-radius:2px;background:#818CF8;}
+  .sb-foot{margin-top:auto;padding:9px 16px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:rgba(255,255,255,.25);}
+
+  /* ───── main column ───── */
+  .main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+  /* topbar — switches to a light/white surface to sit on the white canvas */
+  .topbar{height:54px;flex-shrink:0;background:rgba(255,255,255,.75);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border-bottom:1px solid #E7E9EE;display:flex;align-items:center;padding:0 22px;gap:10px;box-shadow:0 1px 2px rgba(28,25,23,.04);}
+  .tb-accent{width:3px;height:20px;border-radius:3px;background:linear-gradient(135deg,#6366F1,#4F46E5);}
+  .tb-title{font-size:16px;font-weight:700;color:#312E81;letter-spacing:-.02em;}
+  .tb-sub{font-size:10px;color:#78716C;margin-top:1px;}
+  .tb-btn{font-size:11px;font-weight:600;padding:5px 12px;border-radius:7px;border:1px solid #E2E5EB;background:#fff;color:#44403C;}
+
+  /* content canvas — the actual change: white / off-white base */
+  .content{flex:1;overflow-y:auto;background:linear-gradient(180deg,#FFFFFF 0%,#F4F5F7 60%,#EEF0F3 100%);padding:20px 22px;}
+
+  .stat-row{display:flex;gap:12px;margin-bottom:16px;}
+  .stat{flex:1;min-width:140px;border-radius:11px;overflow:hidden;background:rgba(17,24,39,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.09);box-shadow:0 14px 34px rgba(17,24,39,.16),inset 0 1px 0 rgba(255,255,255,.06);}
+  .stat-bar{height:3px;background:linear-gradient(135deg,#6366F1,#4F46E5);}
+  .stat-body{padding:13px 15px;position:relative;}
+  .stat-ic{position:absolute;right:12px;top:11px;width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#6366F1,#4F46E5);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700;}
+  .stat-k{font-size:9px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin-bottom:6px;}
+  .stat-v{font-size:22px;font-weight:800;color:#F9FAFB;letter-spacing:-.03em;}
+
+  .card{border-radius:12px;overflow:hidden;background:rgba(17,24,39,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.09);box-shadow:0 18px 44px rgba(17,24,39,.16),inset 0 1px 0 rgba(255,255,255,.06);margin-bottom:16px;}
+  .chead{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.02);}
+  .chead .bar{width:3px;height:15px;border-radius:2px;background:linear-gradient(135deg,#6366F1,#4F46E5);}
+  .chead .t{font-size:13px;font-weight:700;color:#F9FAFB;}
+  .cbody{padding:16px 18px;}
+
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#7B8494;font-weight:600;padding:0 0 9px;border-bottom:1px solid rgba(255,255,255,.08);}
+  td{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);color:#D1D5DB;}
+  .badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:10px;font-weight:600;}
+  .badge.ok{background:rgba(110,231,183,.14);color:#6EE7B7;border:1px solid rgba(110,231,183,.28);}
+  .badge.warn{background:rgba(252,211,77,.14);color:#FCD34D;border:1px solid rgba(252,211,77,.28);}
+  .badge.muted{background:rgba(148,163,184,.14);color:#94A3B8;border:1px solid rgba(148,163,184,.25);}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .ph-chart{height:130px;border-radius:8px;background:linear-gradient(180deg,rgba(99,102,241,.10),transparent);border:1px solid rgba(255,255,255,.06);display:flex;align-items:flex-end;padding:10px;gap:6px;}
+  .ph-bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#818CF8,#6366F1);}
+
+  .note{position:fixed;bottom:14px;right:18px;max-width:420px;background:#1C1917;color:#F5F5F4;font-size:11px;line-height:1.6;border-radius:10px;padding:12px 16px;box-shadow:0 12px 32px rgba(0,0,0,.3);}
+  code{background:rgba(255,255,255,.12);border-radius:4px;padding:1px 5px;}
+</style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sb-head">
+      <div class="sb-brand">
+        <div class="sb-mark">◆</div>
+        <div><div class="sb-name">Lattice</div><div class="sb-tag">EVALUATION DASHBOARD</div></div>
+      </div>
+    </div>
+    <div class="sb-group">Main</div>
+    <div class="sb-item active"><span class="ic">⊞</span>Dashboard</div>
+    <div class="sb-group">Evals</div>
+    <div class="sb-item"><span class="ic">▶</span>Test Runs</div>
+    <div class="sb-item"><span class="ic">◈</span>Bug Dashboard</div>
+    <div class="sb-group">Observe</div>
+    <div class="sb-item"><span class="ic">⬡</span>Trace Viewer</div>
+    <div class="sb-item"><span class="ic">◫</span>Sessions</div>
+    <div class="sb-foot">v1.0.0 · Port 5000</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-accent"></div>
+      <div style="flex:1;">
+        <div class="tb-title">Dashboard</div>
+        <div class="tb-sub">playready · production · v2.4.1</div>
+      </div>
+      <button class="tb-btn">Dark</button>
+      <button class="tb-btn">Sign out</button>
+    </div>
+
+    <div class="content">
+      <div class="stat-row">
+        <div class="stat"><div class="stat-bar"></div><div class="stat-body"><div class="stat-ic">▶</div><div class="stat-k">Total Runs</div><div class="stat-v">7</div></div></div>
+        <div class="stat"><div class="stat-bar"></div><div class="stat-body"><div class="stat-ic">✓</div><div class="stat-k">Pass Rate</div><div class="stat-v">87.3%</div></div></div>
+        <div class="stat"><div class="stat-bar"></div><div class="stat-body"><div class="stat-ic">$</div><div class="stat-k">Eval Cost</div><div class="stat-v">$0.0412</div></div></div>
+        <div class="stat"><div class="stat-bar"></div><div class="stat-body"><div class="stat-ic">◔</div><div class="stat-k">Avg Duration</div><div class="stat-v">4.2s</div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="chead"><div class="bar"></div><div class="t">Evaluation Runs</div></div>
+        <div class="cbody">
+          <table>
+            <tr><th>Run</th><th>Framework</th><th>Score</th><th>Status</th></tr>
+            <tr><td>test_run_1780810301</td><td>RAGAS</td><td>0.91</td><td><span class="badge ok">Passed</span></td></tr>
+            <tr><td>test_run_foundry_…410</td><td>Foundry</td><td>0.78</td><td><span class="badge warn">Review</span></td></tr>
+            <tr><td>test_run_dspy_…410</td><td>DSPy</td><td>0.84</td><td><span class="badge ok">Passed</span></td></tr>
+            <tr><td>test_run_deepeval_…105</td><td>DeepEval</td><td>—</td><td><span class="badge muted">Pending</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="twocol">
+        <div class="card" style="margin-bottom:0;">
+          <div class="chead"><div class="bar"></div><div class="t">Pass Rate (Last 10 Runs)</div></div>
+          <div class="cbody"><div class="ph-chart"><div class="ph-bar" style="height:55%"></div><div class="ph-bar" style="height:70%"></div><div class="ph-bar" style="height:62%"></div><div class="ph-bar" style="height:80%"></div><div class="ph-bar" style="height:74%"></div><div class="ph-bar" style="height:88%"></div><div class="ph-bar" style="height:91%"></div></div></div>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <div class="chead"><div class="bar"></div><div class="t">Eval Cost (Last 10 Runs)</div></div>
+          <div class="cbody"><div class="ph-chart"><div class="ph-bar" style="height:40%;background:linear-gradient(180deg,#6EE7B7,#10B981)"></div><div class="ph-bar" style="height:48%;background:linear-gradient(180deg,#6EE7B7,#10B981)"></div><div class="ph-bar" style="height:35%;background:linear-gradient(180deg,#6EE7B7,#10B981)"></div><div class="ph-bar" style="height:60%;background:linear-gradient(180deg,#6EE7B7,#10B981)"></div><div class="ph-bar" style="height:52%;background:linear-gradient(180deg,#6EE7B7,#10B981)"></div><div class="ph-bar" style="height:44%;background:linear-gradient(180deg,#6EE7B7,#10B981)"></div><div class="ph-bar" style="height:58%;background:linear-gradient(180deg,#6EE7B7,#10B981)"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Option 1 — full-page mockup.</strong> Content canvas is now a white→off-white gradient
+    (<code>#FFFFFF → #EEF0F3</code>). Sidebar stays dark (unchanged). Topbar switches to a frosted white
+    surface so it sits naturally on the new canvas. Cards become self-contained dark glass panels
+    (<code>rgba(17,24,39,.94)</code> + blur + soft elevation shadow + hairline white-glass border) —
+    same dark "card" identity as before, now floating with strong contrast on a light page.
+  </div>
+
+</body>
+</html>

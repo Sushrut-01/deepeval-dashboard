@@ -61,6 +61,7 @@ find_*.py
 restore_*.py
 add_*.py
 build_pages.py
+gen_*.py
 
 # ── Theme preview files (dev-only) ────────────────────────────────────────────
 backend/static/theme*.html

@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>DeepEval Dashboard</title>
+<title>Lattice — Evaluation Dashboard</title>
+<link rel="icon" type="image/svg+xml" href="/static/lattice-logo.svg"/>
 <script src="/static/vendor/react.production.min.js"></script>
 <script src="/static/vendor/react-dom.production.min.js"></script>
 <script src="/static/vendor/babel.min.js"></script>
@@ -11,8 +12,23 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI','Inter',sans-serif;background:#1F2937;color:#F9FAFB}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-thumb{background:#6366F155;border-radius:10px}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:10px}
+::-webkit-scrollbar-thumb{
+  background-color:rgba(255,255,255,.34);
+  background-image:
+    radial-gradient(circle 1.7px at 4px 4px,  #6366F1 99%, transparent 100%),
+    radial-gradient(circle 1.7px at 11px 4px, #10B981 99%, transparent 100%),
+    radial-gradient(circle 1.7px at 4px 11px, #F59E0B 99%, transparent 100%),
+    radial-gradient(circle 1.7px at 11px 11px,#A78BFA 99%, transparent 100%);
+  background-size:15px 15px;
+  background-repeat:repeat;
+  background-clip:padding-box;
+  border:2px solid transparent;
+  border-radius:10px;
+}
+::-webkit-scrollbar-thumb:hover{background-color:rgba(255,255,255,.5)}
+::-webkit-scrollbar-corner{background:transparent}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -26,12 +42,12 @@ td{padding:8px 13px;font-size:13px;border-right:1px solid #2D3748;color:#D1D5DB;
 td:last-child{border-right:none}
 tbody tr{border-bottom:1px solid #2D3748;transition:background .1s}
 tbody tr:hover{background:#1e2d45;box-shadow:inset 3px 0 0 #6366F1}
-.scard{background:#111827;border-radius:13px;border:1.5px solid #374151;box-shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2);overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
-.scard:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(99,102,241,.18);border-color:#6366F1}
-.shead{padding:11px 18px;border-bottom:1.5px solid #374151;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#1a2234,#111827);flex-shrink:0}
-.stat-wrap{background:#111827;border-radius:13px;flex:1;min-width:140px;border:1.5px solid #374151;overflow:hidden;transition:transform .18s,box-shadow .18s}
-.stat-wrap:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.2)}
-.filter-bar{background:#111827;border:1.5px solid #374151;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.scard{background:rgba(255,255,255,.09);backdrop-filter:blur(20px) saturate(120%);-webkit-backdrop-filter:blur(20px) saturate(120%);border-radius:10px;border:1px solid rgba(255,255,255,.08);box-shadow:0 2px 4px rgba(0,0,0,.26),0 18px 44px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.07);overflow:hidden;transition:border-color .18s,background .18s,box-shadow .18s}
+.scard:hover{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.115);box-shadow:0 4px 8px rgba(0,0,0,.3),0 22px 52px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.09)}
+.shead{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.05);flex-shrink:0}
+.stat-wrap{background:rgba(255,255,255,.09);backdrop-filter:blur(20px) saturate(120%);-webkit-backdrop-filter:blur(20px) saturate(120%);border-radius:9px;flex:1;min-width:140px;border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 28px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.07);overflow:hidden;transition:border-color .18s,background .18s,box-shadow .18s}
+.stat-wrap:hover{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.115)}
+.filter-bar{background:rgba(255,255,255,.065);backdrop-filter:blur(16px) saturate(120%);-webkit-backdrop-filter:blur(16px) saturate(120%);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;box-shadow:0 6px 18px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.06)}
 .pill-pass{background:rgba(16,185,129,.18);color:#34D399;border:1px solid rgba(52,211,153,.3);display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
 .pill-fail{background:rgba(248,113,113,.18);color:#F87171;border:1px solid rgba(248,113,113,.3);display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
 .pill-warn{background:rgba(251,191,36,.18);color:#FCD34D;border:1px solid rgba(252,211,77,.3);display:inline-flex;align-items:center;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700}
@@ -62,7 +78,7 @@ tbody tr:hover{background:#1e2d45;box-shadow:inset 3px 0 0 #6366F1}
 </style>
 </head>
 <body>
-<div id="root"><div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#1F2937;flex-direction:column;gap:14px"><div style="width:36px;height:36px;border:3px solid #374151;border-top-color:#6366F1;border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="color:#9CA3AF;font-family:Segoe UI,sans-serif;font-size:14px">Loading DeepEval Dashboard…</div></div></div>
+<div id="root"><div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#1F2937;flex-direction:column;gap:14px"><div style="width:36px;height:36px;border:3px solid #374151;border-top-color:#6366F1;border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="color:#9CA3AF;font-family:Segoe UI,sans-serif;font-size:14px">Loading Lattice…</div></div></div>
 <script type="text/babel">
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
 const API = "";
@@ -79,7 +95,7 @@ const C = {
   text:"#F9FAFB", textSub:"#D1D5DB", muted:"#9CA3AF",
   border:"#374151", borderSoft:"#2D3748",
   topbar:"linear-gradient(180deg,#1F2937,#111827)",
-  sidebarGrad:"linear-gradient(160deg,#111827,#0a0f1a)",
+  sidebarGrad:"linear-gradient(160deg,#1A2030,#11151F)",
 };
 const AMBER_THEME = {
   bg:"#FFFBEB", card:"#FFFFFF", sidebar:"#1C1917",
@@ -112,7 +128,7 @@ function switchTheme(id) {
     C.text="#F9FAFB"; C.textSub="#D1D5DB"; C.muted="#9CA3AF";
     C.border="#374151"; C.borderSoft="#2D3748";
     C.topbar="linear-gradient(180deg,#1F2937,#111827)";
-    C.sidebarGrad="linear-gradient(160deg,#111827,#0a0f1a)";
+    C.sidebarGrad="linear-gradient(160deg,#1A2030,#11151F)";
   }
   document.body.style.background = C.bg;
   document.body.style.color = C.text;
@@ -222,7 +238,7 @@ function StatCard(props) {
   return React.createElement("div", {className:"stat-wrap fade-in"},
     React.createElement("div", {style:{height:3,background:grad}}),
     React.createElement("div", {style:{padding:"12px 14px",position:"relative"}},
-      React.createElement("div", {style:{position:"absolute",right:12,top:10,width:32,height:32,borderRadius:9,background:grad,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,boxShadow:"0 3px 10px rgba(0,0,0,.3)"}}, props.icon||"📊"),
+      React.createElement("div", {style:{position:"absolute",right:12,top:10,width:32,height:32,borderRadius:9,background:grad,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,boxShadow:"0 3px 10px rgba(0,0,0,.3)"}}, props.icon||"▥"),
       React.createElement("div", {style:{fontSize:24,fontWeight:800,color:C.text,letterSpacing:"-.03em"}}, props.value!=null?props.value:"-"),
       React.createElement("div", {style:{fontSize:11,color:C.textSub,fontWeight:500,marginTop:3}}, props.label),
       props.sub ? React.createElement("div", {style:{fontSize:10,color:C.muted,marginTop:2}}, props.sub) : null
@@ -267,7 +283,7 @@ function Loading(props) {
 }
 function Empty(props) {
   return React.createElement("div", {style:{padding:"48px 20px",textAlign:"center"}},
-    React.createElement("div", {style:{fontSize:38,marginBottom:12,opacity:.4}}, props.icon||"📭"),
+    React.createElement("div", {style:{fontSize:38,marginBottom:12,opacity:.4}}, props.icon||"▢"),
     React.createElement("div", {style:{fontSize:14,fontWeight:700,color:C.text,marginBottom:5}}, props.title||"No data"),
     props.sub ? React.createElement("div", {style:{fontSize:12,color:C.muted,marginBottom:14}}, props.sub) : null,
     props.action || null
@@ -463,52 +479,62 @@ function TraceViewer(props) {
 /* ─── SIDEBAR ────────────────────────────────────────────────────────────── */
 var NAV_GROUPS = [
   {g:"MAIN",     items:[{id:"dash",lbl:"Dashboard",ic:"⊞"}]},
-  {g:"EVALS",    items:[{id:"runs",lbl:"Test Runs",ic:"▶"},{id:"bugs",lbl:"Bug Dashboard",ic:"🐛"}]},
-  {g:"OBSERVE",  items:[{id:"traces",lbl:"Trace Viewer",ic:"⬡"},{id:"sessions",lbl:"Sessions",ic:"💬"},{id:"users",lbl:"Users",ic:"👤"}]},
-  {g:"ANALYSIS", items:[{id:"metrics",lbl:"Metrics & Trends",ic:"📈"},{id:"latency",lbl:"Latency",ic:"⏱"},{id:"cost",lbl:"Cost & Tokens",ic:"💰"},{id:"usage",lbl:"Usage",ic:"📊"},{id:"compare",lbl:"Compare Runs",ic:"⇄"}]},
-  {g:"EVAL",     items:[{id:"queues",lbl:"Annotation Queues",ic:"📋"},{id:"anns",lbl:"Annotations",ic:"🏷"},{id:"evals",lbl:"Online Evaluators",ic:"⚡"}]},
-  {g:"AUTO",     items:[{id:"autos",lbl:"Rules",ic:"⚙"},{id:"hooks",lbl:"Webhooks",ic:"🔗"}]},
-  {g:"DATA",     items:[{id:"datasets",lbl:"Datasets",ic:"🗂"},{id:"prompts",lbl:"Prompt Hub",ic:"📝"},{id:"playground",lbl:"Playground",ic:"🎮"}]},
-  {g:"OBSERVE",  items:[{id:"sla",lbl:"SLA Dashboard",ic:"📊"},{id:"projects",lbl:"Projects",ic:"🗂"}]},
+  {g:"EVALS",    items:[{id:"runs",lbl:"Test Runs",ic:"▶"},{id:"bugs",lbl:"Bug Dashboard",ic:"◈"}]},
+  {g:"OBSERVE",  items:[{id:"traces",lbl:"Trace Viewer",ic:"⬡"},{id:"sessions",lbl:"Sessions",ic:"◫"},{id:"users",lbl:"Users",ic:"◉"}]},
+  {g:"ANALYSIS", items:[{id:"metrics",lbl:"Metrics & Trends",ic:"▲"},{id:"latency",lbl:"Latency",ic:"◔"},{id:"cost",lbl:"Cost & Tokens",ic:"$"},{id:"usage",lbl:"Usage",ic:"▥"},{id:"compare",lbl:"Compare Runs",ic:"⇄"}]},
+  {g:"EVAL",     items:[{id:"queues",lbl:"Annotation Queues",ic:"▤"},{id:"anns",lbl:"Annotations",ic:"◇"},{id:"evals",lbl:"Online Evaluators",ic:"✦"}]},
+  {g:"AUTO",     items:[{id:"autos",lbl:"Rules",ic:"⬣"},{id:"hooks",lbl:"Webhooks",ic:"↗"}]},
+  {g:"DATA",     items:[{id:"datasets",lbl:"Datasets",ic:"▦"},{id:"prompts",lbl:"Prompt Hub",ic:"▭"},{id:"playground",lbl:"Playground",ic:"◐"}]},
+  {g:"OBSERVE",  items:[{id:"sla",lbl:"SLA Dashboard",ic:"◓"},{id:"projects",lbl:"Projects",ic:"▣"}]},
   {g:"TOOLS",   items:[{id:"benchmarks",lbl:"Benchmarks",ic:"B"},{id:"customdash",lbl:"Custom Dashboard",ic:"D"}]},
-  {g:"SYSTEM",   items:[{id:"settings",lbl:"Settings",ic:"⚙"}]},
+  {g:"SYSTEM",   items:[{id:"settings",lbl:"Settings",ic:"⬣"}]},
 ];
 function Sidebar(props) {
-  return React.createElement("div",{style:{width:218,background:C.sidebar,display:"flex",flexDirection:"column",height:"100vh",flexShrink:0,borderRight:"1px solid rgba(255,255,255,.06)",overflowY:"auto",position:"sticky",top:0}},
-    React.createElement("div",{style:{padding:"17px 14px 12px",background:C.sidebarGrad,flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}},
-      React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"#fff",letterSpacing:"-.02em"}},"DeepEval"),
-      React.createElement("div",{style:{fontSize:9,color:"rgba(255,255,255,.38)",letterSpacing:".14em",textTransform:"uppercase",marginTop:2}},"Local Dashboard")
+  var _hov=useState(null),hovered=_hov[0],setHovered=_hov[1];
+  return React.createElement("div",{style:{width:218,background:"linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,.08)),rgba(8,10,16,.5)",backdropFilter:"blur(24px) saturate(120%)",WebkitBackdropFilter:"blur(24px) saturate(120%)",display:"flex",flexDirection:"column",height:"100vh",flexShrink:0,borderRight:"1px solid rgba(255,255,255,.08)",boxShadow:"inset -1px 0 0 rgba(255,255,255,.04),4px 0 24px rgba(0,0,0,.2)",overflowY:"auto",position:"sticky",top:0,zIndex:1}},
+    React.createElement("div",{style:{padding:"14px 14px 12px",background:C.sidebarGrad,flexShrink:0,borderBottom:"1px solid rgba(255,255,255,.07)"}},
+      React.createElement("img",{src:"/static/lattice-wordmark.svg",alt:"Lattice",style:{width:"100%",maxWidth:188,height:"auto",display:"block"}})
     ),
-    React.createElement("nav",{style:{flex:1,padding:"8px 0"}},
+    React.createElement("nav",{style:{flex:1,padding:"10px 0"}},
       NAV_GROUPS.map(function(grp,gi) {
-        return React.createElement("div",{key:grp.g},
-          gi>0&&React.createElement("div",{style:{height:1,background:"rgba(255,255,255,.07)",margin:"7px 12px 5px"}}),
-          React.createElement("div",{style:{fontSize:9,color:"rgba(255,255,255,.28)",letterSpacing:".14em",padding:"8px 14px 3px",fontWeight:700,textTransform:"uppercase"}},grp.g),
+        return React.createElement("div",{key:grp.g+gi},
+          gi>0&&React.createElement("div",{style:{height:1,background:"rgba(255,255,255,.06)",margin:"9px 16px 7px"}}),
+          React.createElement("div",{style:{fontSize:9,color:"rgba(255,255,255,.85)",letterSpacing:".15em",padding:"7px 16px 5px",fontWeight:700,textTransform:"uppercase"}},grp.g),
           grp.items.map(function(item) {
             var active = props.active===item.id;
+            var hov = hovered===item.id;
             return React.createElement("button",{
-              key:item.id, onClick:function(){props.go(item.id);},
-              style:{display:"flex",alignItems:"center",gap:7,padding:"6px 12px",width:"calc(100% - 16px)",background:active?C.primaryGrad:"transparent",border:"none",cursor:"pointer",textAlign:"left",margin:"1px 8px",borderRadius:7,transition:"all .18s"}
+              key:item.id,
+              onClick:function(){props.go(item.id);},
+              onMouseEnter:function(){setHovered(item.id);},
+              onMouseLeave:function(){setHovered(function(h){return h===item.id?null:h;});},
+              style:{position:"relative",display:"flex",alignItems:"center",gap:9,padding:"7px 12px 7px 14px",width:"calc(100% - 16px)",background:active?"rgba(99,102,241,.13)":(hov?"rgba(255,255,255,.045)":"transparent"),border:"1px solid "+(active?"rgba(129,140,248,.28)":"transparent"),borderRadius:7,cursor:"pointer",textAlign:"left",margin:"1px 8px",transition:"background .15s,border-color .15s,color .15s"}
             },
-              React.createElement("span",{style:{fontSize:11,color:active?"#fff":"rgba(255,255,255,.5)",flexShrink:0}},item.ic),
-              React.createElement("span",{style:{fontSize:12,fontWeight:active?700:400,color:active?"#fff":"rgba(255,255,255,.62)"}},item.lbl)
+              active&&React.createElement("span",{style:{position:"absolute",left:-8,top:"24%",bottom:"24%",width:3,borderRadius:2,background:"#818CF8"}}),
+              React.createElement("span",{style:{fontSize:12,width:16,textAlign:"center",color:active?"#C7D2FE":(hov?"rgba(255,255,255,.7)":"rgba(255,255,255,.42)"),flexShrink:0}},item.ic),
+              React.createElement("span",{style:{fontSize:12,fontWeight:active?600:400,color:active?"#C7D2FE":(hov?"rgba(255,255,255,.85)":"rgba(255,255,255,.6)"),letterSpacing:"-.005em"}},item.lbl)
             );
           })
         );
       })
     ),
-    React.createElement("div",{style:{padding:"8px 14px",borderTop:"1px solid rgba(255,255,255,.06)",fontSize:10,color:"rgba(255,255,255,.25)",flexShrink:0}},"v1.0.0 · Port 5000")
+    React.createElement("div",{style:{padding:"9px 16px",borderTop:"1px solid rgba(255,255,255,.06)",fontSize:10,color:"rgba(255,255,255,.25)",flexShrink:0,letterSpacing:".02em"}},"v1.0.0 · Port 5000")
   );
 }
 
 /* ─── TOPBAR ─────────────────────────────────────────────────────────────── */
 function Topbar(props) {
   var otherTheme = _themeId==="dark"?"amber":"dark";
-  var otherLabel = _themeId==="dark"?"🌕 Amber":"🌙 Dark";
-  return React.createElement("div",{style:{height:54,background:C.topbar,borderBottom:"1.5px solid "+C.border,display:"flex",alignItems:"center",padding:"0 22px",gap:10,flexShrink:0,boxShadow:"0 2px 8px rgba(0,0,0,.15)"}},
-    React.createElement("div",{style:{width:3,height:20,background:C.primaryGrad,borderRadius:3,boxShadow:"0 0 8px "+C.primary+"88"}}),
+  var otherLabel = _themeId==="dark"?"Amber":"Dark";
+  return React.createElement("div",{style:{height:54,background:"rgba(8,10,16,.45)",backdropFilter:"blur(20px) saturate(120%)",WebkitBackdropFilter:"blur(20px) saturate(120%)",borderBottom:"1px solid rgba(255,255,255,.07)",display:"flex",alignItems:"center",padding:"0 22px",gap:10,flexShrink:0,boxShadow:"0 1px 2px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)"}},
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"5px 5px",gridTemplateRows:"5px 5px",gap:3,flexShrink:0}},
+      React.createElement("span",{style:{borderRadius:"50%",background:"#6366F1"}}),
+      React.createElement("span",{style:{borderRadius:"50%",background:"#10B981"}}),
+      React.createElement("span",{style:{borderRadius:"50%",background:"#A78BFA"}}),
+      React.createElement("span",{style:{borderRadius:"50%",background:"#F59E0B"}})
+    ),
     React.createElement("div",{style:{flex:1}},
-      React.createElement("div",{style:{fontSize:16,fontWeight:700,color:C.primary,letterSpacing:"-.02em",lineHeight:1.1}},props.title||"Dashboard"),
+      React.createElement("div",{style:{fontSize:16,fontWeight:700,color:C.text,letterSpacing:"-.02em",lineHeight:1.1}},props.title||"Dashboard"),
       props.sub&&React.createElement("div",{style:{fontSize:10,color:C.muted,marginTop:1}},props.sub)
     ),
     React.createElement("div",{style:{display:"flex",gap:7,alignItems:"center"}},
@@ -557,18 +583,28 @@ function LoginPage(props) {
         setBusy(false);
       }).catch(function(){setErr("Cannot connect to server");setBusy(false);});
   }
-  return React.createElement("div",{style:{display:"flex",height:"100vh",alignItems:"center",justifyContent:"center",background:C.bg}},
-    React.createElement("div",{style:{width:380,background:C.card,borderRadius:16,border:"1.5px solid "+C.border,boxShadow:"0 20px 60px rgba(0,0,0,.4)",overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"28px 32px 20px",background:C.primaryGrad,textAlign:"center"}},
-        React.createElement("div",{style:{fontSize:22,fontWeight:800,color:"#fff",letterSpacing:"-.02em"}},"DeepEval"),
-        React.createElement("div",{style:{fontSize:9,color:"rgba(255,255,255,.55)",letterSpacing:".14em",textTransform:"uppercase",marginTop:3}},"Local Dashboard")
+  /* Login screen is intentionally fixed to a dark/white palette (matches the
+     Lattice mark's own dark tile + white core), independent of the in-app
+     light/dark theme toggle — it's the brand's "front door". */
+  var darkInpStyle={width:"100%",padding:"10px 13px",borderRadius:8,border:"1px solid rgba(255,255,255,.10)",background:"rgba(255,255,255,.06)",color:"#F9FAFB",fontSize:14,outline:"none",boxSizing:"border-box",fontFamily:"inherit"};
+  var darkLblStyle={fontSize:10,fontWeight:700,color:"#9CA3AF",textTransform:"uppercase",letterSpacing:".08em",marginBottom:6,display:"block"};
+  return React.createElement("div",{style:{display:"flex",height:"100vh",alignItems:"center",justifyContent:"center",background:"linear-gradient(165deg,#1B2230,#10141C)"}},
+    React.createElement("div",{style:{width:380,background:"rgba(255,255,255,.09)",backdropFilter:"blur(20px) saturate(120%)",WebkitBackdropFilter:"blur(20px) saturate(120%)",borderRadius:14,border:"1px solid rgba(255,255,255,.08)",boxShadow:"0 24px 70px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07)",overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"38px 32px 26px",textAlign:"center",borderBottom:"1px solid rgba(255,255,255,.06)"}},
+        React.createElement("img",{src:"/static/lattice-wordmark.svg",alt:"Lattice",style:{height:60,maxWidth:"100%",display:"inline-block"}})
       ),
       React.createElement("form",{onSubmit:submit,style:{padding:"28px 32px"}},
-        React.createElement("div",{style:{marginBottom:14}},React.createElement(Lbl,null,"Username"),React.createElement(Inp,{value:user,onChange:function(e){setUser(e.target.value);}})),
-        React.createElement("div",{style:{marginBottom:18}},React.createElement(Lbl,null,"Password"),React.createElement(Inp,{type:"password",value:pass,onChange:function(e){setPass(e.target.value);},placeholder:"Default: admin123"})),
-        err&&React.createElement("div",{style:{background:C.redSoft,color:C.red,borderRadius:8,padding:"8px 12px",fontSize:12,marginBottom:14}},err),
-        React.createElement("button",{type:"submit",disabled:busy,style:{width:"100%",padding:11,borderRadius:10,background:C.primaryGrad,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",opacity:busy?.7:1}},busy?"Signing in…":"Sign In →"),
-        React.createElement("div",{style:{fontSize:11,color:C.muted,textAlign:"center",marginTop:14}},"Default: admin / admin123")
+        React.createElement("div",{style:{marginBottom:14}},
+          React.createElement("label",{style:darkLblStyle},"Username"),
+          React.createElement("input",{value:user,onChange:function(e){setUser(e.target.value);},style:darkInpStyle})
+        ),
+        React.createElement("div",{style:{marginBottom:18}},
+          React.createElement("label",{style:darkLblStyle},"Password"),
+          React.createElement("input",{type:"password",value:pass,onChange:function(e){setPass(e.target.value);},placeholder:"Default: admin123",style:darkInpStyle})
+        ),
+        err&&React.createElement("div",{style:{background:"rgba(239,68,68,.12)",color:"#FCA5A5",border:"1px solid rgba(239,68,68,.3)",borderRadius:8,padding:"8px 12px",fontSize:12,marginBottom:14}},err),
+        React.createElement("button",{type:"submit",disabled:busy,style:{width:"100%",padding:12,borderRadius:10,background:"#F9FAFB",color:"#111827",border:"none",fontSize:14,fontWeight:800,letterSpacing:"-.01em",cursor:"pointer",opacity:busy?.7:1}},busy?"Signing in…":"Sign In →"),
+        React.createElement("div",{style:{fontSize:11,color:"#6B7280",textAlign:"center",marginTop:16}},"Default: admin / admin123")
       )
     )
   );
@@ -576,7 +612,7 @@ function LoginPage(props) {
 
 
 /* ─── SLA STATUS BAR (appears on Dashboard homepage) ────────────────────── */
-function SLAStatusBar() {
+function SLAStatusBar(props) {
   var _c = useFetch("/api/sla/compliance", ["slac2"]), comp = _c.data;
   if (!comp || !comp.total) return null;
   var slos = comp.slos || [];
@@ -599,7 +635,7 @@ function SLAStatusBar() {
         return React.createElement("span", { key: i, className: sc, style: { fontSize: 10 } }, s.name + " " + (s.status === "ok" ? "OK" : s.status === "breach" ? "BREACH" : "?"));
       })
     ),
-    React.createElement("a", { href: "#", onClick: function(e) { e.preventDefault(); }, style: { fontSize: 11, color: textColor, fontWeight: 600, textDecoration: "none", flexShrink: 0 } }, "View SLA Dashboard →")
+    React.createElement("a", { href: "#", onClick: function(e) { e.preventDefault(); props.go && props.go("sla"); }, style: { fontSize: 11, color: textColor, fontWeight: 600, textDecoration: "none", flexShrink: 0, cursor: "pointer" } }, "View SLA Dashboard →")
   );
 }
 
@@ -652,19 +688,19 @@ function DashPage(props) {
   var prChart={labels:spData.map(function(s){return (s.datetime||"").slice(5,16);}),datasets:[{label:"Pass Rate %",data:spData.map(function(s){return +((s.passRate||0)*100).toFixed(1);}),borderColor:C.primary,backgroundColor:C.primarySoft,tension:.4,fill:true,pointRadius:3,pointBackgroundColor:C.primary}]};
   var costChart={labels:spData.map(function(s){return (s.datetime||"").slice(5,16);}),datasets:[{label:"Cost ($)",data:spData.map(function(s){return +(s.cost||0).toFixed(4);}),borderColor:C.teal,backgroundColor:C.tealSoft,tension:.4,fill:true,pointRadius:3}]};
   return React.createElement(PW,null,
-    dat.alert&&React.createElement("div",{style:{background:C.redSoft,border:"1.5px solid "+C.red+"55",borderRadius:10,padding:"10px 16px",fontSize:13,fontWeight:600,color:C.red}},"⚠ "+dat.alertMessage),
+    dat.alert&&React.createElement("div",{style:{background:C.redSoft,border:"1.5px solid "+C.red+"55",borderRadius:10,padding:"10px 16px",fontSize:13,fontWeight:600,color:C.red}},"▲ "+dat.alertMessage),
     React.createElement(SR,null,
       React.createElement(StatCard,{label:"Total Runs",value:dat.totalRuns||0,icon:"▶",grad:C.primaryGrad}),
       React.createElement(StatCard,{label:"Pass Rate",value:dat.totalRuns?((dat.overallPassRate||0)*100).toFixed(1)+"%":"-",icon:"✓",grad:(dat.overallPassRate||0)>=.7?C.tealGrad:C.redGrad}),
-      React.createElement(StatCard,{label:"Eval Cost",value:dat.totalCost?"$"+dat.totalCost.toFixed(4):"-",icon:"💰",grad:C.amberGrad}),
-      React.createElement(StatCard,{label:"Avg Duration",value:dat.avgDuration?dat.avgDuration.toFixed(1)+"s":"-",icon:"⏱",grad:C.purpleGrad}),
-      React.createElement(StatCard,{label:"Error Rate",value:dat.errorRate?((dat.errorRate)*100).toFixed(1)+"%":"-",icon:"⚠",grad:(dat.errorRate||0)>.05?C.redGrad:C.tealGrad}),
-      React.createElement(StatCard,{label:"Total Tokens",value:dat.tokenTotal?dat.tokenTotal.toLocaleString():"-",icon:"🔤",grad:C.primaryGrad})
+      React.createElement(StatCard,{label:"Eval Cost",value:dat.totalCost?"$"+dat.totalCost.toFixed(4):"-",icon:"$",grad:C.amberGrad}),
+      React.createElement(StatCard,{label:"Avg Duration",value:dat.avgDuration?dat.avgDuration.toFixed(1)+"s":"-",icon:"◔",grad:C.purpleGrad}),
+      React.createElement(StatCard,{label:"Error Rate",value:dat.errorRate?((dat.errorRate)*100).toFixed(1)+"%":"-",icon:"✗",grad:(dat.errorRate||0)>.05?C.redGrad:C.tealGrad}),
+      React.createElement(StatCard,{label:"Total Tokens",value:dat.tokenTotal?dat.tokenTotal.toLocaleString():"-",icon:"#",grad:C.primaryGrad})
     ),
-    React.createElement(SLAStatusBar,null),
+    React.createElement(SLAStatusBar,{go:go}),
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
-      React.createElement(SCard,null,React.createElement(SHead,null,"Pass Rate (Last 10 Runs)"),React.createElement("div",{style:{padding:14}},spData.length?React.createElement(ChartCanvas,{type:"line",data:prChart,h:170,options:{scales:{y:{min:0,max:100,ticks:{callback:function(v){return v+"%";}}}}}}) :React.createElement(Empty,{title:"No run history",icon:"📈"}))),
-      React.createElement(SCard,null,React.createElement(SHead,null,"Eval Cost (Last 10 Runs)"),React.createElement("div",{style:{padding:14}},spData.length?React.createElement(ChartCanvas,{type:"line",data:costChart,h:170}):React.createElement(Empty,{title:"No cost data",icon:"💰"})))
+      React.createElement(SCard,null,React.createElement(SHead,null,"Pass Rate (Last 10 Runs)"),React.createElement("div",{style:{padding:14}},spData.length?React.createElement(ChartCanvas,{type:"line",data:prChart,h:170,options:{scales:{y:{min:0,max:100,ticks:{callback:function(v){return v+"%";}}}}}}) :React.createElement(Empty,{title:"No run history",icon:"▲"}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Eval Cost (Last 10 Runs)"),React.createElement("div",{style:{padding:14}},spData.length?React.createElement(ChartCanvas,{type:"line",data:costChart,h:170}):React.createElement(Empty,{title:"No cost data",icon:"$"})))
     ),
     pb&&pb.runTypes&&pb.runTypes.length>0&&React.createElement(SCard,null,
       React.createElement(SHead,null,"Span Type Distribution"),
@@ -681,20 +717,22 @@ function DashPage(props) {
 /* ─── RUNS TABLE (shared) ────────────────────────────────────────────────── */
 function RunsTable(props) {
   var rows=props.rows||[],go=props.go,compact=props.compact,onDel=props.onDel;
-  if(!rows.length)return React.createElement(Empty,{icon:"📭",title:"No runs found",sub:"Set DEEPEVAL_RESULTS_FOLDER and run deepeval test run tests/"});
+  if(!rows.length)return React.createElement(Empty,{icon:"▢",title:"No runs found",sub:"Set DEEPEVAL_RESULTS_FOLDER and run deepeval test run tests/"});
   return React.createElement("div",{style:{overflowX:"auto"}},
     React.createElement("table",null,
       React.createElement("thead",null,React.createElement("tr",null,
-        React.createElement("th",null,"Timestamp"),React.createElement("th",null,"Env"),React.createElement("th",null,"Version"),
+        React.createElement("th",null,"Timestamp"),React.createElement("th",null,"Env"),React.createElement("th",null,"Evaluator"),React.createElement("th",null,"Version"),
         React.createElement("th",null,"Passed"),React.createElement("th",null,"Failed"),React.createElement("th",null,"Pass Rate"),
         !compact&&React.createElement("th",null,"Cost"),!compact&&React.createElement("th",null,"Duration"),
         React.createElement("th",null,"Actions")
       )),
       React.createElement("tbody",null,rows.map(function(r){
         var pr=r.passRate||0,pc=pr>=.8?"#10B981":pr>=.5?"#F59E0B":"#F87171";
+        var fwColor={"ragas":"#6366f1","azure-foundry":"#10b981","dspy":"#f59e0b","deepeval":"#a78bfa"}[r.framework]||"#6b7280";
         return React.createElement("tr",{key:r.filename,style:{cursor:"pointer"},onClick:function(){go("run",{rf:r.filename});}},
           React.createElement("td",{style:{fontSize:11,color:C.muted}},(r.datetime||"").replace("T"," ").slice(0,16)),
           React.createElement("td",null,React.createElement("span",{className:"pill-info",style:{fontSize:10}},r.environment||"—")),
+          React.createElement("td",null,React.createElement("span",{style:{background:fwColor+"22",color:fwColor,border:"1px solid "+fwColor+"55",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}},r.evaluatorLabel||r.framework||"—")),
           React.createElement("td",{style:{fontSize:11,color:C.muted,fontFamily:"monospace"}},r.version||"—"),
           React.createElement("td",{style:{fontWeight:700,color:"#10B981"}},r.testPassed||0),
           React.createElement("td",{style:{fontWeight:700,color:"#F87171"}},r.testFailed||0),
@@ -769,13 +807,37 @@ function RunPage(props) {
       )
     ),
 
-    critBugs.length>0&&React.createElement("div",{style:{background:C.redSoft,border:"1.5px solid "+C.red+"55",borderRadius:10,padding:"10px 16px",cursor:"pointer",fontSize:13,fontWeight:600,color:C.red},onClick:function(){go("bugs",{rf:rf});}},"🐛 "+critBugs.length+" critical bug"+(critBugs.length>1?"s":"")+" detected. Click to view →"),
+    critBugs.length>0&&React.createElement("div",{style:{background:C.redSoft,border:"1.5px solid "+C.red+"55",borderRadius:10,padding:"10px 16px",cursor:"pointer",fontSize:13,fontWeight:600,color:C.red},onClick:function(){go("bugs",{rf:rf});}},"▲ "+critBugs.length+" critical bug"+(critBugs.length>1?"s":"")+" detected. Click to view →"),
     React.createElement(SR,null,
       React.createElement(StatCard,{label:"Passed",value:s.testPassed||0,icon:"✓",grad:C.tealGrad}),
       React.createElement(StatCard,{label:"Failed",value:s.testFailed||0,icon:"✗",grad:C.redGrad}),
       React.createElement(StatCard,{label:"Pass Rate",value:((s.passRate||0)*100).toFixed(1)+"%",icon:"%",grad:C.primaryGrad}),
-      React.createElement(StatCard,{label:"Cost",value:s.evaluationCost?"$"+s.evaluationCost.toFixed(4):"—",icon:"💰",grad:C.amberGrad}),
+      React.createElement(StatCard,{label:"Cost",value:s.evaluationCost?"$"+s.evaluationCost.toFixed(4):"—",icon:"$",grad:C.amberGrad}),
       React.createElement(StatCard,{label:"Duration",value:s.runDuration?s.runDuration.toFixed(1)+"s":"—",icon:"⏱",grad:C.purpleGrad})
+    ),
+    /* Test Suite Report */
+    mScores.length>0&&React.createElement(SCard,{style:{marginBottom:14}},
+      React.createElement(SHead,null,"Test Suite Report"),
+      React.createElement("div",{style:{padding:"14px 18px"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12,marginBottom:16}},
+          mScores.map(function(m,i){
+            var pr=Math.round((m.passRate!=null?m.passRate:(m.avg||0)>=.5?1:0)*100);
+            var col=(m.avg||0)>=.8?C.teal:(m.avg||0)>=.6?C.amber:C.red;
+            return React.createElement("div",{key:i,style:{background:C.bg,border:"1px solid "+C.border,borderRadius:8,padding:"10px 12px"}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
+                React.createElement("span",{style:{fontSize:11,fontWeight:700,color:C.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:130}},m.metric),
+                React.createElement("span",{style:{fontSize:12,fontWeight:800,color:col}},(m.avg||0).toFixed(3))
+              ),
+              React.createElement("div",{style:{height:6,background:C.border,borderRadius:3,overflow:"hidden",marginBottom:4}},
+                React.createElement("div",{style:{height:"100%",width:Math.round((m.avg||0)*100)+"%",background:col,borderRadius:3,transition:"width .4s"}})
+              ),
+              React.createElement("div",{style:{fontSize:10,color:C.muted}},"avg: "+(m.avg||0).toFixed(3)+(m.passes!=null?" · "+m.passes+"P / "+m.fails+"F":""))
+            );
+          })
+        ),
+        React.createElement(SHead,{style:{marginBottom:8}},"Metric Score Chart"),
+        mChart.labels.length?React.createElement(ChartCanvas,{type:"bar",data:mChart,h:160,options:{scales:{y:{min:0,max:1}},plugins:{legend:{display:false}}}}):React.createElement(Empty,{title:"No metrics"})
+      )
     ),
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
       React.createElement(SCard,null,React.createElement(SHead,null,"Metric Scores"),React.createElement("div",{style:{padding:14}},mChart.labels.length?React.createElement(ChartCanvas,{type:"bar",data:mChart,h:170,options:{scales:{y:{min:0,max:1}},plugins:{legend:{display:false}}}}):React.createElement(Empty,{title:"No metrics"}))),
@@ -815,7 +877,7 @@ function RunPage(props) {
               React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:3,flexWrap:"wrap"}},(tc.metrics||[]).slice(0,3).map(function(m,i){return React.createElement(MetPill,{key:i,name:m.name,score:m.score,success:m.success,sm:true});}))),
               React.createElement("td",{style:{fontSize:12,color:C.muted}},tc.runDuration?tc.runDuration.toFixed(2)+"s":"—"),
               React.createElement("td",null,React.createElement("div",{style:{display:"flex",gap:3,flexWrap:"wrap"}},(tc.tags||[]).map(function(tag,ti){return React.createElement("span",{key:ti,className:"pill-info",style:{fontSize:9,padding:"0 5px",cursor:"pointer"}},tag);}))),
-              React.createElement("td",null,tc.hasTrace?"🔍":"—")
+              React.createElement("td",null,tc.hasTrace?"●":"—")
             );
           }))
         ),
@@ -881,7 +943,7 @@ function CasePage(props) {
       )
     ),
     tab==="metrics"&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
-      !metricsData.length&&React.createElement(Empty,{title:"No metrics",icon:"📊"}),
+      !metricsData.length&&React.createElement(Empty,{title:"No metrics",icon:"▥"}),
       metricsData.map(function(m,i){
         return React.createElement(SCard,{key:i},React.createElement("div",{style:{padding:16}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
@@ -901,17 +963,17 @@ function CasePage(props) {
         ));
       })
     ),
-    tab==="trace"&&(tc.hasTrace?React.createElement(SCard,null,React.createElement(SHead,null,"Trace Viewer"),React.createElement("div",{style:{padding:12}},React.createElement(TraceViewer,{trace:trace}))):React.createElement(Empty,{title:"No trace data",sub:"Add @observe decorators to capture traces",icon:"🔍"})),
+    tab==="trace"&&(tc.hasTrace?React.createElement(SCard,null,React.createElement(SHead,null,"Trace Viewer"),React.createElement("div",{style:{padding:12}},React.createElement(TraceViewer,{trace:trace}))):React.createElement(Empty,{title:"No trace data",sub:"Add @observe decorators to capture traces",icon:"▢"})),
     tab==="annotate"&&React.createElement(SCard,null,React.createElement(SHead,null,"Annotate"),React.createElement("div",{style:{padding:16,display:"flex",flexDirection:"column",gap:12}},
       React.createElement("div",null,React.createElement(Lbl,null,"Label"),React.createElement(Sel,{value:annLabel,onChange:function(e){setAnnLabel(e.target.value);}},
-        React.createElement("option",{value:""},"— select —"),React.createElement("option",{value:"correct"},"✓ Correct"),React.createElement("option",{value:"incorrect"},"✗ Incorrect"),React.createElement("option",{value:"needs_review"},"⚠ Needs Review")
+        React.createElement("option",{value:""},"— select —"),React.createElement("option",{value:"correct"},"✓ Correct"),React.createElement("option",{value:"incorrect"},"✗ Incorrect"),React.createElement("option",{value:"needs_review"},"● Needs Review")
       )),
       React.createElement("div",null,React.createElement(Lbl,null,"Corrected Output"),React.createElement(TA,{value:annCorr,onChange:function(e){setAnnCorr(e.target.value);},placeholder:"What should the model have said?"})),
       React.createElement("div",null,React.createElement(Lbl,null,"Notes"),React.createElement(TA,{value:annNote,onChange:function(e){setAnnNote(e.target.value);},placeholder:"Notes…",rows:2})),
       React.createElement("div",{style:{display:"flex",gap:8}},
         React.createElement(Btn,{onClick:saveAnn},"Save Annotation"),
-        React.createElement(Btn,{v:"ghost",onClick:function(){api.post("/api/feedback",{runFile:rf,caseName:cn,type:"thumbs_up"}).then(function(){toast("👍 Saved!");});}},"👍"),
-        React.createElement(Btn,{v:"ghost",onClick:function(){api.post("/api/feedback",{runFile:rf,caseName:cn,type:"thumbs_down"}).then(function(){toast("👎 Saved!");});}},"👎")
+        React.createElement(Btn,{v:"ghost",onClick:function(){api.post("/api/feedback",{runFile:rf,caseName:cn,type:"thumbs_up"}).then(function(){toast("Feedback saved");});}},"▲ Helpful"),
+        React.createElement(Btn,{v:"ghost",onClick:function(){api.post("/api/feedback",{runFile:rf,caseName:cn,type:"thumbs_down"}).then(function(){toast("Feedback saved");});}},"▽ Not helpful")
       )
     ))
   );
@@ -919,49 +981,874 @@ function CasePage(props) {
 
 
 /* ─── ANALYTICS PAGES ────────────────────────────────────────────────────── */
-function MetricsPage(props) {
-  var _tr=useFetch("/api/metrics/trends",["mtr",props.env,props.ver]),trends=_tr.data;
-  var _sum=useFetch("/api/metrics/summary",["msum"]),summary=_sum.data;
-  var _sm=useState("all"),selM=_sm[0],setSelM=_sm[1];
-  var allM=[].concat.apply([],(trends||[]).map(function(t){return [t.metric];})).filter(function(v,i,a){return a.indexOf(v)===i;});
-  var COLORS=[C.primary,C.teal,C.amber,C.purple,C.red];
-  var labels=(trends||[]).map(function(t){return (t.datetime||"").slice(5,16);}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
-  var mNames=selM==="all"?allM:[selM];
-  function mkDs(key){return {labels:labels,datasets:mNames.map(function(m,i){return {label:m,data:labels.map(function(lb){var r=(trends||[]).find(function(t){return t.metric===m&&(t.datetime||"").slice(5,16)===lb;});return r?+(r[key]||0).toFixed(3):null;}),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+"18",tension:.4,fill:false,pointRadius:3,spanGaps:true};})}}
-  return React.createElement(PW,null,
-    React.createElement("div",{className:"filter-bar"},React.createElement(Sel,{value:selM,onChange:function(e){setSelM(e.target.value);},style:{width:200}},React.createElement("option",{value:"all"},"All Metrics"),allM.map(function(m){return React.createElement("option",{key:m,value:m},m);}))),
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
-      React.createElement(SCard,null,React.createElement(SHead,null,"Avg Score Over Time"),React.createElement("div",{style:{padding:14}},labels.length?React.createElement(ChartCanvas,{type:"line",data:mkDs("avg"),h:190,options:{scales:{y:{min:0,max:1}}}}):React.createElement(Empty,{title:"No data"}))),
-      React.createElement(SCard,null,React.createElement(SHead,null,"Pass Rate Over Time"),React.createElement("div",{style:{padding:14}},labels.length?React.createElement(ChartCanvas,{type:"line",data:mkDs("passRate"),h:190,options:{scales:{y:{min:0,max:1}}}}):React.createElement(Empty,{title:"No data"})))
+/* ─── COMPARISON TAB (inside Metrics page) ────────────────────────────────── */
+function _ComparisonTab(props){
+  var COLORS=props.COLORS||[C.primary,C.teal,C.amber,C.purple];
+  var FW_COLORS={"RAGAS Evaluator":C.primary,"Foundry Evaluator":C.teal,"DSPy Evaluator":C.amber,"DeepEval Evaluator":C.purple};
+
+  var _gb=useState("auto"),groupBy=_gb[0],setGroupBy=_gb[1];
+  var qs="/api/metrics/bot-comparison?group_by="+groupBy+(props.env&&props.env!=="all"?"&env="+props.env:"")+(props.ver&&props.ver!=="all"?"&version="+props.ver:"");
+  var _d=useFetch(qs,["bcmp",groupBy,props.env,props.ver]),cmp=_d.data,loading=_d.loading;
+
+  var groups=(cmp&&cmp.bots)||[];
+  var metrics=(cmp&&cmp.metrics)||[];
+
+  /* bar chart: group × metric */
+  var barData=groups.length&&metrics.length?{
+    labels:metrics,
+    datasets:groups.map(function(g,i){
+      var col=FW_COLORS[g]||COLORS[i%COLORS.length];
+      return{label:g,data:metrics.map(function(m){return+((((cmp.data[g]||{})[m])||{}).avg||0).toFixed(3);}),backgroundColor:col+"cc",borderRadius:4};
+    })
+  }:null;
+
+  /* pass rate radar chart */
+  var radarData=groups.length&&metrics.length?{
+    labels:metrics,
+    datasets:groups.map(function(g,i){
+      var col=FW_COLORS[g]||COLORS[i%COLORS.length];
+      return{label:g,data:metrics.map(function(m){return+((((cmp.data[g]||{})[m])||{}).passRate||0).toFixed(3);}),borderColor:col,backgroundColor:col+"33",pointBackgroundColor:col,pointRadius:4};
+    })
+  }:null;
+
+  var gbOpts=[{v:"auto",l:"Auto (Evaluator)"},{v:"evaluator",l:"Evaluator"},{v:"bot",l:"Bot Type"},{v:"version",l:"Version"},{v:"env",l:"Environment"}];
+
+  return React.createElement(React.Fragment,null,
+    /* Group-by selector */
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14,flexWrap:"wrap"}},
+      React.createElement("span",{style:{fontSize:12,color:C.muted,fontWeight:600}},"Group by:"),
+      gbOpts.map(function(o){
+        var active=groupBy===o.v;
+        return React.createElement("button",{key:o.v,onClick:function(){setGroupBy(o.v);},
+          style:{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:active?700:400,
+            border:"1px solid "+(active?C.primary:C.border),
+            background:active?C.primary:"transparent",
+            color:active?"#fff":C.muted,cursor:"pointer"}},o.l);
+      })
     ),
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}},
-      (summary||[]).map(function(m,i){return React.createElement(SCard,{key:i},React.createElement("div",{style:{padding:13}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}},
-          React.createElement("span",{style:{fontSize:13,fontWeight:700,color:C.text}},m.metric),
-          React.createElement("span",{style:{fontSize:10,background:m.trend==="up"?"rgba(16,185,129,.2)":m.trend==="down"?"rgba(248,113,113,.2)":"rgba(99,102,241,.15)",color:m.trend==="up"?C.teal:m.trend==="down"?C.red:C.primary,padding:"1px 8px",borderRadius:20,fontWeight:700}},m.trend==="up"?"Up":m.trend==="down"?"Down":"Stable")
-        ),
-        React.createElement(ScoreBar,{score:m.avg||0}),
-        React.createElement("div",{style:{display:"flex",gap:12,marginTop:7,fontSize:11,color:C.muted}},
-          React.createElement("span",null,"P:",React.createElement("b",null,m.passes)," F:",React.createElement("b",null,m.fails))
+    loading?React.createElement(Loading,null):
+    groups.length===0?React.createElement(Empty,{title:"No comparison data",sub:"Run evaluations from at least 2 evaluators or bot types"}):
+    React.createElement(React.Fragment,null,
+      /* Summary score cards per evaluator */
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:10,marginBottom:14}},
+        groups.map(function(g,i){
+          var col=FW_COLORS[g]||COLORS[i%COLORS.length];
+          var mData=cmp.data[g]||{};
+          var mList=Object.keys(mData);
+          var avgAll=mList.length?+(mList.reduce(function(s,m){return s+(mData[m].avg||0);},0)/mList.length).toFixed(3):null;
+          var prAll=mList.length?Math.round(mList.reduce(function(s,m){return s+(mData[m].passRate||0);},0)/mList.length*100):null;
+          return React.createElement("div",{key:g,style:{background:C.card,border:"2px solid "+col+"55",borderRadius:10,padding:"12px 14px",borderTop:"4px solid "+col}},
+            React.createElement("div",{style:{fontSize:11,fontWeight:700,color:col,marginBottom:6}},g),
+            React.createElement("div",{style:{fontSize:22,fontWeight:800,color:C.text}},avgAll!=null?avgAll.toFixed(3):"—"),
+            React.createElement("div",{style:{fontSize:10,color:C.muted}},"avg score"),
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:prAll>=80?C.teal:prAll>=60?C.amber:C.red,marginTop:4}},prAll!=null?prAll+"%":"—"),
+            React.createElement("div",{style:{fontSize:10,color:C.muted}},"pass rate"),
+            React.createElement("div",{style:{fontSize:10,color:C.muted,marginTop:4}},mList.length+" metric"+(mList.length!==1?"s":""))
+          );
+        })
+      ),
+      /* Avg Score Grouped Bar */
+      barData&&React.createElement(SCard,{style:{marginBottom:14}},
+        React.createElement(SHead,null,"Avg Score — "+groupBy.charAt(0).toUpperCase()+groupBy.slice(1)+" × Metric"),
+        React.createElement("div",{style:{padding:14}},
+          React.createElement(ChartCanvas,{type:"bar",data:barData,h:260,options:{
+            scales:{y:{min:0,max:1,ticks:{callback:function(v){return v.toFixed(1);}}}},
+            plugins:{legend:{position:"bottom"}}
+          }})
         )
-      ));})
+      ),
+      /* Overall Pass Rate by Evaluator */
+      groups.length&&React.createElement(SCard,{style:{marginBottom:14}},
+        React.createElement(SHead,null,"Overall Pass Rate by Evaluator"),
+        React.createElement("div",{style:{padding:"14px 18px"}},
+          groups.map(function(g,i){
+            var col=FW_COLORS[g]||COLORS[i%COLORS.length];
+            var mData=cmp.data[g]||{};
+            var mKeys=Object.keys(mData);
+            var pr=mKeys.length?Math.round(mKeys.reduce(function(s,m){return s+(mData[m].passRate||0);},0)/mKeys.length*100):0;
+            return React.createElement("div",{key:g,style:{marginBottom:12}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}},
+                React.createElement("span",{style:{fontWeight:700,color:col}},g),
+                React.createElement("span",{style:{fontWeight:700,color:pr>=80?C.teal:pr>=60?C.amber:C.red}},pr+"%")
+              ),
+              React.createElement("div",{style:{height:10,background:C.border,borderRadius:5,overflow:"hidden"}},
+                React.createElement("div",{style:{height:"100%",width:pr+"%",background:pr>=80?C.teal:pr>=60?C.amber:C.red,borderRadius:5,transition:"width .4s"}})
+              ),
+              React.createElement("div",{style:{fontSize:10,color:C.muted,marginTop:2}},mKeys.length+" metrics evaluated")
+            );
+          })
+        )
+      ),
+      /* Detail table */
+      React.createElement(SCard,null,
+        React.createElement(SHead,null,"Detail — "+groupBy.charAt(0).toUpperCase()+groupBy.slice(1)+" x Metric"),
+        React.createElement("div",{style:{overflowX:"auto"}},
+          React.createElement("table",null,
+            React.createElement("thead",null,React.createElement("tr",null,
+              React.createElement("th",{style:{minWidth:140}},"Group"),
+              metrics.map(function(m){return React.createElement("th",{key:m,style:{fontSize:10,minWidth:90}},m);})
+            )),
+            React.createElement("tbody",null,groups.map(function(g){
+              var col=FW_COLORS[g]||"#6366f1";
+              return React.createElement("tr",{key:g},
+                React.createElement("td",null,
+                  React.createElement("span",{style:{background:col+"22",color:col,border:"1px solid "+col+"44",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}},g)
+                ),
+                metrics.map(function(m){
+                  var d=((cmp.data[g]||{})[m])||{};
+                  var avg=d.avg;
+                  var pr=d.passRate!=null?Math.round(d.passRate*100):null;
+                  return React.createElement("td",{key:m,style:{textAlign:"center"}},
+                    avg!=null?React.createElement(React.Fragment,null,
+                      React.createElement("div",{style:{fontWeight:700,color:avg>=.8?C.teal:avg>=.6?C.amber:C.red}},avg.toFixed(3)),
+                      React.createElement("div",{style:{fontSize:10,color:C.muted}},pr!=null?pr+"%":"—")
+                    ):"—");
+                })
+              );
+            }))
+          )
+        )
+      )
     )
   );
 }
 
+/* ─── HEATMAP TAB ────────────────────────────────────────────────────────────── */
+function _HeatmapTab(props){
+  var FW_COLORS={"ragas":C.primary,"azure-foundry":C.teal,"dspy":C.amber,"deepeval":"#a78bfa"};
+  var FW_LABELS={"ragas":"RAGAS Evaluator","azure-foundry":"Foundry Evaluator","dspy":"DSPy Evaluator","deepeval":"DeepEval Evaluator"};
+
+  var _hm=useFetch("/api/metrics/heatmap",["hmap",props.env,props.ver]),hm=_hm.data,loading=_hm.loading;
+  var _filt=useState("all"),filt=_filt[0],setFilt=_filt[1];
+  var _mfilt=useState("all"),mFilt=_mfilt[0],setMFilt=_mfilt[1];
+
+  /* colour helper — returns bg color and text */
+  function hmCell(val){
+    if(val===null||val===undefined)return{bg:"#1a2234",text:"—",col:C.muted};
+    var v=Math.max(0,Math.min(1,val));
+    var r=v<.5?220:Math.round(220-(v-.5)*2*200);
+    var g=v>.5?180:Math.round(v*2*180);
+    var col=v>=.7?"#052e16":v>=.5?"#422006":"#450a0a";
+    return{bg:"rgba("+r+","+g+",60,0.85)",text:v.toFixed(2),col:col};
+  }
+
+  var allRuns=(hm&&hm.runs)||[];
+  var allMetrics=(hm&&hm.metrics)||[];
+
+  /* evaluator filter */
+  var evalKeys=allRuns.map(function(r){return r.framework||"ragas";}).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var visRuns=filt==="all"?allRuns:allRuns.filter(function(r){return(r.framework||"ragas")===filt;});
+
+  /* metric filter — show only metrics present in visible runs */
+  var presentMetrics=allMetrics.filter(function(m){return visRuns.some(function(r){return r[m]!=null;});});
+
+  /* metric category quick-filter: get prefix groups (e.g. RAGAS, Foundry, DSPy, DeepEval) */
+  var METRIC_GROUPS={
+    "RAGAS":    ["Faithfulness","AnswerRelevancy","ContextPrecision","ContextRecall","ContextRelevance","ResponseGroundedness"],
+    "Foundry":  ["Coherence","Fluency","Relevance","Groundedness","Similarity","F1Score","ROUGEScore","BLEUScore","METEORScore","Violence","Sexual","SelfHarm","HateUnfairness"],
+    "DSPy":     ["KeywordPresence","FallbackDetection","FormattingConstraints","PDFGrounding","LLMAnswerQuality","CompositeScore"],
+    "DeepEval": ["PlayReadyRelevance","PlayReadyFaithfulness","PlayReadyClarity","AnswerRelevancyMetric","FaithfulnessMetric","HallucinationMetric","PIILeakageMetric","NonAdviceMetric","RoleViolationMetric","PromptAlignmentMetric"],
+  };
+  var visMetrics=mFilt==="all"?presentMetrics:(METRIC_GROUPS[mFilt]||[]).filter(function(m){return presentMetrics.indexOf(m)>=0;});
+  if(!visMetrics.length) visMetrics=presentMetrics;
+
+  /* group runs by evaluator */
+  var groups=[];var seenFw=[];
+  visRuns.forEach(function(row){
+    var fw=row.framework||"ragas";
+    if(seenFw.indexOf(fw)===-1){seenFw.push(fw);groups.push({fw:fw,rows:[]});}
+    groups[seenFw.indexOf(fw)].rows.push(row);
+  });
+
+  /* summary row averages */
+  var summaryRow={};
+  visMetrics.forEach(function(m){
+    var vals=visRuns.map(function(r){return r[m];}).filter(function(v){return v!=null;});
+    summaryRow[m]=vals.length?+(vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(3):null;
+  });
+
+  if(loading)return React.createElement(Loading,null);
+
+  var COL_W=72; /* px per metric column */
+
+  return React.createElement(React.Fragment,null,
+    /* info banner */
+    React.createElement("div",{style:{background:"rgba(99,102,241,.1)",border:"1px solid rgba(99,102,241,.3)",borderRadius:8,padding:"8px 14px",marginBottom:10,fontSize:12,color:C.textSub,display:"flex",alignItems:"center",gap:8}},
+      React.createElement("span",{style:{color:C.primary,fontWeight:700}},"ⓘ"),
+      React.createElement("span",null,"Each ",React.createElement("strong",null,"row")," = one evaluation run. Grouped by evaluator framework. Columns = metrics from ALL evaluators — a cell is blank (—) when that metric wasn't measured in that run. Use the ",React.createElement("strong",null,"METRIC GROUP")," filter to focus on one evaluator's metrics.")
+    ),
+    /* filter bar */
+    React.createElement("div",{style:{display:"flex",gap:14,marginBottom:12,flexWrap:"wrap",alignItems:"flex-start"}},
+      /* evaluator filter */
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:11,color:C.muted,fontWeight:700,marginBottom:5}},"EVALUATOR"),
+        React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+          [["all","All","#6b7280"]].concat(evalKeys.map(function(k){return[k,FW_LABELS[k]||k,FW_COLORS[k]||"#6b7280"];})).map(function(opt){
+            var active=filt===opt[0];
+            return React.createElement("button",{key:opt[0],onClick:function(){setFilt(opt[0]);},
+              style:{padding:"5px 14px",borderRadius:7,fontSize:12,fontWeight:active?700:500,
+                border:"1.5px solid "+(active?opt[2]:C.border),
+                background:active?opt[2]+"33":"transparent",
+                color:active?opt[2]:C.muted,cursor:"pointer",transition:"all .12s"}},opt[1]);
+          })
+        )
+      ),
+      /* metric group filter */
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:11,color:C.muted,fontWeight:700,marginBottom:5}},"METRIC GROUP"),
+        React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+          ["all","RAGAS","Foundry","DSPy","DeepEval"].map(function(g){
+            var active=mFilt===g;
+            return React.createElement("button",{key:g,onClick:function(){setMFilt(g);},
+              style:{padding:"5px 14px",borderRadius:7,fontSize:12,fontWeight:active?700:500,
+                border:"1.5px solid "+(active?C.primary:C.border),
+                background:active?C.primarySoft:"transparent",
+                color:active?C.primary:C.muted,cursor:"pointer",transition:"all .12s"}},g==="all"?"All Metrics":g+" Metrics");
+          })
+        )
+      ),
+      React.createElement("div",{style:{marginLeft:"auto",display:"flex",alignItems:"flex-end",paddingBottom:2}},
+        React.createElement("span",{style:{fontSize:11,color:C.muted}},visRuns.length+" runs · "+visMetrics.length+" metrics")
+      )
+    ),
+    React.createElement(SCard,null,
+      React.createElement(SHead,null,
+        "Score Heatmap",
+        filt!=="all"&&React.createElement("span",{style:{fontSize:11,color:FW_COLORS[filt]||C.muted,marginLeft:8}},"— "+(FW_LABELS[filt]||filt)),
+        mFilt!=="all"&&React.createElement("span",{style:{fontSize:11,color:C.primary,marginLeft:8}},"/ "+mFilt+" metrics")
+      ),
+      React.createElement("div",{style:{overflowX:"auto",overflowY:"auto",maxHeight:520,padding:"6px 8px"}},
+        (visRuns.length&&visMetrics.length)?
+        React.createElement("table",{style:{fontSize:13,borderCollapse:"separate",borderSpacing:"2px 1px",minWidth:Math.max(500,visMetrics.length*COL_W+180)}},
+          React.createElement("thead",{style:{position:"sticky",top:0,zIndex:2}},
+            React.createElement("tr",null,
+              React.createElement("th",{style:{position:"sticky",left:0,zIndex:3,background:"#1a2234",padding:"8px 14px",textAlign:"left",fontSize:12,minWidth:180,borderBottom:"2px solid "+C.border}},"Run / Evaluator"),
+              visMetrics.map(function(m){
+                return React.createElement("th",{key:m,style:{background:"#1a2234",padding:"6px 4px",fontSize:11,fontWeight:700,width:COL_W,maxWidth:COL_W,textAlign:"center",borderBottom:"2px solid "+C.border,whiteSpace:"normal",wordBreak:"break-word",verticalAlign:"bottom",lineHeight:"1.3"}},m);
+              }),
+              React.createElement("th",{style:{background:"#1a2234",padding:"6px 8px",fontSize:11,fontWeight:700,textAlign:"center",borderBottom:"2px solid "+C.border,color:C.muted,minWidth:56}},"Row Avg")
+            )
+          ),
+          React.createElement("tbody",null,
+            groups.map(function(grp){
+              var fwC=FW_COLORS[grp.fw]||"#6b7280";
+              var label=FW_LABELS[grp.fw]||grp.fw;
+              return React.createElement(React.Fragment,{key:grp.fw},
+                React.createElement("tr",null,
+                  React.createElement("td",{colSpan:visMetrics.length+2,
+                    style:{padding:"8px 14px",background:fwC+"18",borderTop:"2px solid "+fwC+"55",borderBottom:"1px solid "+fwC+"33"}},
+                    React.createElement("span",{style:{background:fwC+"33",color:fwC,border:"1px solid "+fwC+"55",borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:700,marginRight:8}},label),
+                    React.createElement("span",{style:{fontSize:11,color:C.muted}},grp.rows.length+" run"+(grp.rows.length!==1?"s":""))
+                  )
+                ),
+                grp.rows.map(function(row,i){
+                  var vals=visMetrics.map(function(m){return row[m];}).filter(function(v){return v!=null;});
+                  var rowAvg=vals.length?+(vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(2):null;
+                  var avgCell=hmCell(rowAvg);
+                  return React.createElement("tr",{key:i,style:{transition:"opacity .1s"},
+                    onMouseEnter:function(e){e.currentTarget.style.opacity="0.85";},
+                    onMouseLeave:function(e){e.currentTarget.style.opacity="1";}},
+                    React.createElement("td",{style:{position:"sticky",left:0,zIndex:1,background:C.card,padding:"7px 14px",whiteSpace:"nowrap",borderBottom:"1px solid "+C.borderSoft}},
+                      React.createElement("div",{style:{fontSize:12,color:C.text,fontWeight:600}},(row.datetime||"").replace("T"," ").slice(0,16)),
+                      React.createElement("div",{style:{fontSize:11,color:C.muted,marginTop:1}},(row.filename||"").slice(9,30))
+                    ),
+                    visMetrics.map(function(m){
+                      var cell=hmCell(row[m]);
+                      return React.createElement("td",{key:m,title:m+": "+(row[m]!=null?row[m]:"—"),
+                        style:{background:cell.bg,padding:"7px 4px",textAlign:"center",fontSize:13,fontWeight:700,
+                          borderRadius:4,border:"2px solid "+C.card,color:cell.col,cursor:"default"}},cell.text);
+                    }),
+                    React.createElement("td",{style:{background:avgCell.bg,padding:"7px 8px",textAlign:"center",fontSize:13,fontWeight:800,borderRadius:4,border:"2px solid "+C.card,color:avgCell.col}},avgCell.text)
+                  );
+                })
+              );
+            }),
+            visRuns.length>1&&React.createElement("tr",{style:{borderTop:"3px solid "+C.border,background:"#1a2234"}},
+              React.createElement("td",{style:{position:"sticky",left:0,zIndex:1,background:"#1a2234",padding:"8px 14px",fontSize:13,fontWeight:800,color:C.muted}},"Overall Avg"),
+              visMetrics.map(function(m){
+                var cell=hmCell(summaryRow[m]);
+                return React.createElement("td",{key:m,style:{background:cell.bg,padding:"7px 4px",textAlign:"center",fontSize:13,fontWeight:800,borderRadius:4,border:"2px solid #1a2234",color:cell.col}},cell.text);
+              }),
+              React.createElement("td",null)
+            )
+          )
+        ):React.createElement(Empty,{title:"No heatmap data",sub:"Run evaluations to populate this view"})
+      )
+    )
+  );
+}
+
+/* ─── REGRESSION TAB ────────────────────────────────────────────────────────── */
+function _RegressionTab(props){
+  var FW_COLORS={"ragas":C.primary,"azure-foundry":C.teal,"dspy":C.amber,"deepeval":"#a78bfa"};
+  var FW_LABELS={"ragas":"RAGAS Evaluator","azure-foundry":"Foundry Evaluator","dspy":"DSPy Evaluator","deepeval":"DeepEval Evaluator"};
+
+  var _reg=useFetch("/api/metrics/regressions",["reg"]),regs=_reg.data,loading=_reg.loading;
+  var _filt=useState("all"),filt=_filt[0],setFilt=_filt[1];
+
+  var allRegs=(regs)||[];
+  var evalKeys=allRegs.map(function(r){return r.framework||"ragas";}).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var visRegs=filt==="all"?allRegs:allRegs.filter(function(r){return(r.framework||"ragas")===filt;});
+
+  if(loading)return React.createElement(Loading,null);
+
+  return React.createElement(React.Fragment,null,
+    /* evaluator filter */
+    evalKeys.length>1&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12,flexWrap:"wrap"}},
+      React.createElement("span",{style:{fontSize:12,color:C.muted,fontWeight:600}},"Evaluator:"),
+      [["all","All","#6b7280"]].concat(evalKeys.map(function(k){return[k,FW_LABELS[k]||k,FW_COLORS[k]||"#6b7280"];})).map(function(opt){
+        var active=filt===opt[0];
+        return React.createElement("button",{key:opt[0],onClick:function(){setFilt(opt[0]);},
+          style:{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:active?700:400,
+            border:"1px solid "+(active?opt[2]:C.border),
+            background:active?opt[2]+"33":"transparent",
+            color:active?opt[2]:C.muted,cursor:"pointer"}},opt[1]);
+      })
+    ),
+    visRegs.length?React.createElement(SCard,null,
+      React.createElement(SHead,null,"Active Regressions ("+visRegs.length+")"),
+      React.createElement("div",{style:{padding:8}},
+        visRegs.map(function(r,i){
+          var fw=r.framework||"ragas";
+          var fwC=FW_COLORS[fw]||"#6b7280";
+          var lbl=r.evaluatorLabel||FW_LABELS[fw]||fw;
+          return React.createElement("div",{key:i,style:{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",borderBottom:"1px solid "+C.border,background:i%2===0?C.bg:"transparent"}},
+            React.createElement("span",{style:{fontSize:14,minWidth:24,color:r.type==="PASS_TO_FAIL"?C.red:C.amber}},"●"),
+            React.createElement("div",{style:{flex:1}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:3}},
+                React.createElement("span",{style:{fontWeight:700,fontSize:13}},r.testCase),
+                React.createElement("span",{style:{background:fwC+"22",color:fwC,border:"1px solid "+fwC+"44",borderRadius:20,padding:"1px 7px",fontSize:9,fontWeight:700}},lbl)
+              ),
+              r.metric&&React.createElement("div",{style:{fontSize:11,color:C.muted,marginTop:2}},"Metric: ",r.metric),
+              React.createElement("div",{style:{fontSize:11,marginTop:3}},r.details),
+              r.prevAvg&&React.createElement("div",{style:{fontSize:11,color:C.muted,marginTop:2}},"Previous avg: ",r.prevAvg," -> Current: ",r.current," (drop: ",r.drop,")")
+            ),
+            React.createElement("div",{style:{fontSize:10,color:C.muted,whiteSpace:"nowrap"}},(r.filename||"").slice(9,22))
+          );
+        })
+      )
+    ):React.createElement("div",{style:{textAlign:"center",padding:60}},
+      React.createElement("div",{style:{fontSize:24,marginBottom:8,color:C.teal}},"✓"),
+      React.createElement("div",{style:{fontWeight:700,fontSize:15,color:C.teal}},"No regressions detected"),
+      React.createElement("div",{style:{color:C.muted,fontSize:12,marginTop:4}},"All metrics are stable compared to previous runs")
+    )
+  );
+}
+
+function MetricsPage(props) {
+  var COLORS=[C.primary,C.teal,C.amber,C.purple,C.red,"#ec4899","#14b8a6"];
+  var SPAN_TYPE_COLORS={llm:C.primary,retriever:C.teal,tool:C.amber,agent:C.purple,base:C.muted};
+
+  /* ── state ── */
+  var _sm=useState("all"),selM=_sm[0],setSelM=_sm[1];
+  var _tab=useState("trends"),tab=_tab[0],setTab=_tab[1];
+  var _fullChart=useState(null),fullChart=_fullChart[0],setFullChart=_fullChart[1];
+
+  /* ── data ── */
+  var _tr=useFetch("/api/metrics/trends",["mtr",props.env,props.ver]),trends=_tr.data;
+  var _sum=useFetch("/api/metrics/summary",["msum",props.env,props.ver]),summary=_sum.data;
+  var _reg=useFetch("/api/metrics/regressions",["reg"]),regs=_reg.data;
+  var _hmKpi=useFetch("/api/metrics/heatmap",["hmkpi",props.env,props.ver]),hmKpiRuns=((_hmKpi.data&&_hmKpi.data.runs)||[]);
+
+  var allM=[].concat.apply([],(trends||[]).map(function(t){return[t.metric];})).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+  var mNames=selM==="all"?allM:[selM];
+  var runLabels=(trends||[]).map(function(t){return(t.datetime||"").slice(5,16);}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+
+  /* ── helpers ── */
+  function trendIcon(t){return t==="up"?"▲":t==="down"?"▼":"─";}
+  function trendColor(t){return t==="up"?C.teal:t==="down"?C.red:C.muted;}
+  function tabBtn(id,label){
+    return React.createElement("button",{key:id,onClick:function(){setTab(id);},style:{padding:"5px 14px",fontSize:12,fontWeight:tab===id?700:400,background:tab===id?C.primary:"transparent",color:tab===id?"#fff":C.muted,border:"1px solid "+(tab===id?C.primary:C.border),borderRadius:6,cursor:"pointer"}},label);
+  }
+
+  /* ── chart datasets ── */
+  function mkLineDs(key){
+    return {labels:runLabels,datasets:mNames.map(function(m,i){
+      return {label:m,data:runLabels.map(function(lb){
+        var r=(trends||[]).find(function(t){return t.metric===m&&(t.datetime||"").slice(5,16)===lb;});
+        return r?+(r[key]||0).toFixed(3):null;
+      }),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+"22",tension:.4,fill:false,pointRadius:4,spanGaps:true};
+    })};
+  }
+
+  /* pass/fail stacked bar */
+  var pfData={labels:runLabels,datasets:[
+    {label:"Passed",data:runLabels.map(function(lb){var r=(trends||[]).find(function(t){return(t.datetime||"").slice(5,16)===lb&&(selM==="all"||t.metric===selM);});return r?(r.passes||0):0;}),backgroundColor:C.teal+"bb"},
+    {label:"Failed",data:runLabels.map(function(lb){var r=(trends||[]).find(function(t){return(t.datetime||"").slice(5,16)===lb&&(selM==="all"||t.metric===selM);});return r?(r.fails||0):0;}),backgroundColor:C.red+"bb"},
+  ]};
+
+  /* ── KPI row ── */
+  var totalRuns=(trends||[]).map(function(t){return t.datetime;}).filter(function(v,i,a){return a.indexOf(v)===i;}).length;
+  var overallPR=summary&&summary.length?Math.round(summary.reduce(function(s,m){return s+m.passRate;},0)/summary.length*100):null;
+  var regCount=(regs||[]).length;
+
+  function kpi(label,val,sub,color){
+    return React.createElement("div",{style:{background:C.card,border:"1px solid "+C.border,borderRadius:10,padding:"12px 16px",minWidth:120}},
+      React.createElement("div",{style:{fontSize:11,color:C.muted,marginBottom:4}},label),
+      React.createElement("div",{style:{fontSize:22,fontWeight:800,color:color||C.text}},val==null?"—":val),
+      sub&&React.createElement("div",{style:{fontSize:10,color:C.muted,marginTop:2}},sub)
+    );
+  }
+
+  function expandableCard(title,chartType,chartData,chartOptions,h){
+    return React.createElement(SCard,null,
+      React.createElement(SHead,null,title,
+        React.createElement("button",{onClick:function(){setFullChart({title:title,type:chartType,data:chartData,options:chartOptions});},
+          style:{marginLeft:"auto",background:"none",border:"1px solid "+C.border,borderRadius:5,color:C.muted,padding:"2px 8px",fontSize:11,cursor:"pointer",transition:"all .12s"},
+          title:"Expand chart"},"⤢ Expand")
+      ),
+      React.createElement("div",{style:{padding:14}},chartData?React.createElement(ChartCanvas,{type:chartType,data:chartData,h:h||200,options:chartOptions}):React.createElement(Empty,{title:"No data"}))
+    );
+  }
+
+  return React.createElement(PW,null,
+    /* fullscreen chart modal */
+    fullChart&&React.createElement("div",{className:"modal-ov",onClick:function(){setFullChart(null);}},
+      React.createElement("div",{className:"modal-bx",style:{width:"min(90vw,900px)",maxWidth:"none",padding:0},onClick:function(e){e.stopPropagation();}},
+        React.createElement(SHead,null,fullChart.title,
+          React.createElement("button",{onClick:function(){setFullChart(null);},style:{marginLeft:"auto",background:"none",border:"none",color:C.muted,fontSize:18,cursor:"pointer",lineHeight:1}},"×")
+        ),
+        React.createElement("div",{style:{padding:20}},
+          React.createElement(ChartCanvas,{type:fullChart.type,data:fullChart.data,h:400,options:fullChart.options})
+        )
+      )
+    ),
+    /* filter bar */
+    React.createElement("div",{className:"filter-bar"},
+      React.createElement(Sel,{value:selM,onChange:function(e){setSelM(e.target.value);},style:{width:200}},
+        React.createElement("option",{value:"all"},"All Metrics"),
+        allM.map(function(m){return React.createElement("option",{key:m,value:m},m);})),
+      React.createElement("div",{style:{display:"flex",gap:6,marginLeft:"auto"}},
+        ["trends","comparison","heatmap","regressions"].map(function(id){return tabBtn(id,id[0].toUpperCase()+id.slice(1));})
+      )
+    ),
+
+    /* KPI row */
+    React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
+      kpi("Eval Runs",totalRuns,"distinct run dates"),
+      kpi("Metrics Tracked",(summary||[]).length),
+      kpi("Overall Pass Rate",overallPR!=null?overallPR+"%":null,"avg across all metrics",overallPR>=80?C.teal:overallPR>=60?C.amber:C.red),
+      kpi("Regressions",regCount,regCount>0?"action needed":"all clear",regCount>0?C.red:C.teal),
+      (function(){
+        var FW_NAMES={"ragas":"RAGAS","azure-foundry":"Foundry","dspy":"DSPy","deepeval":"DeepEval"};
+        var fwKeys=hmKpiRuns.map(function(r){return r.framework||"ragas";}).filter(function(v,i,a){return a.indexOf(v)===i;});
+        var fwCount=fwKeys.length||0;
+        var fwLabel=fwKeys.length?fwKeys.map(function(k){return FW_NAMES[k]||k;}).join(" · "):"—";
+        return kpi("Evaluators",fwCount,fwLabel);
+      })()
+    ),
+
+    /* ═══════════════ TRENDS tab ═══════════════ */
+    tab==="trends"&&React.createElement(React.Fragment,null,
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}},
+        expandableCard("Avg Score Over Time","line",runLabels.length?mkLineDs("avg"):null,{scales:{y:{min:0,max:1,ticks:{callback:function(v){return v.toFixed(1);}}}},plugins:{legend:{position:"bottom"}}},200),
+        expandableCard("Pass Rate Over Time","line",runLabels.length?mkLineDs("passRate"):null,{scales:{y:{min:0,max:1,ticks:{callback:function(v){return Math.round(v*100)+"%";}}}},plugins:{legend:{position:"bottom"}}},200)
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}},
+        expandableCard("Pass / Fail per Run","bar",runLabels.length?pfData:null,{scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:"bottom"}}},180),
+        React.createElement(SCard,null,React.createElement(SHead,null,"Score Distribution"),
+          React.createElement("div",{style:{padding:14}},
+            selM!=="all"?React.createElement(_ScoreDistChart,{metric:selM,env:props.env}):React.createElement("div",{style:{color:C.muted,fontSize:12,padding:20,textAlign:"center"}},"Select a metric to see distribution")))
+      ),
+      /* per-metric cards */
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}},
+        (summary||[]).map(function(m,i){
+          var pr=Math.round((m.passRate||0)*100);
+          return React.createElement(SCard,{key:i},React.createElement("div",{style:{padding:13}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}},
+              React.createElement("span",{style:{fontSize:13,fontWeight:700,color:C.text}},m.metric),
+              React.createElement("span",{style:{fontSize:12,color:trendColor(m.trend),fontWeight:700}},trendIcon(m.trend)," ",m.trend)
+            ),
+            React.createElement(ScoreBar,{score:m.avg||0}),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,marginTop:8,fontSize:11}},
+              React.createElement("div",{style:{textAlign:"center"}},React.createElement("div",{style:{color:C.muted}},"Best"),React.createElement("div",{style:{fontWeight:700,color:C.teal}},(m.best||0).toFixed(3))),
+              React.createElement("div",{style:{textAlign:"center"}},React.createElement("div",{style:{color:C.muted}},"Avg"),React.createElement("div",{style:{fontWeight:700,color:C.text}},(m.avg||0).toFixed(3))),
+              React.createElement("div",{style:{textAlign:"center"}},React.createElement("div",{style:{color:C.muted}},"Worst"),React.createElement("div",{style:{fontWeight:700,color:C.red}},(m.worst||0).toFixed(3)))
+            ),
+            React.createElement("div",{style:{display:"flex",gap:8,marginTop:8,fontSize:11,alignItems:"center"}},
+              React.createElement("div",{style:{flex:1,height:5,background:C.border,borderRadius:3}},
+                React.createElement("div",{style:{width:pr+"%",height:"100%",background:pr>=80?C.teal:pr>=60?C.amber:C.red,borderRadius:3}})),
+              React.createElement("span",{style:{color:C.muted,whiteSpace:"nowrap"}},pr+"% pass  P:",m.passes,"  F:",m.fails)
+            )
+          ));
+        })
+      )
+    ),
+
+    /* ═══════════════ COMPARISON tab ═══════════════ */
+    tab==="comparison"&&React.createElement(_ComparisonTab,{env:props.env,ver:props.ver,COLORS:COLORS}),
+
+    /* ═══════════════ HEATMAP tab ═══════════════ */
+    tab==="heatmap"&&React.createElement(_HeatmapTab,{env:props.env,ver:props.ver}),
+
+    /* ═══════════════ REGRESSIONS tab ═══════════════ */
+    tab==="regressions"&&React.createElement(_RegressionTab,null)
+  );
+}
+
+/* mini score distribution chart — fetched per-metric */
+function _ScoreDistChart(props){
+  var _d=useFetch("/api/metrics/distribution/"+encodeURIComponent(props.metric),["dist",props.metric]),d=_d.data;
+  var labels=(d||[]).map(function(b){return b.label;});
+  var counts=(d||[]).map(function(b){return b.count;});
+  var bgColors=["#ef4444bb","#f97316bb","#eab308bb","#22c55ebb","#10b981bb"];
+  var data={labels:labels,datasets:[{label:"Count",data:counts,backgroundColor:bgColors,borderRadius:4}]};
+  return React.createElement(ChartCanvas,{type:"bar",data:data,h:160,options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+}
+
 function LatencyPage() {
+  var _tab=useState("infra"),activeTab=_tab[0],setTab=_tab[1];
+  var _bot=useState("all"),botFilter=_bot[0],setBotFilter=_bot[1];
+  var _usr=useState("all"),userFilter=_usr[0],setUserFilter=_usr[1];
+
+  /* ── Infrastructure data ── */
   var _p=useFetch("/api/latency/percentiles",["lp"]),perc=_p.data;
-  var _s=useFetch("/api/latency/slowest?limit=15",["ls"]),slow=_s.data;
+  var _tr=useFetch("/api/latency/trends",["ltr"]),trData=_tr.data;
+
+  /* ── Load Test data ── */
+  var ltUrl="/api/latency/loadtest"+(botFilter!=="all"?"?bot_type="+botFilter:"");
+  var _lt=useFetch(ltUrl,["ltest",botFilter]),ltRaw=_lt.data;
+  var ltSum   = ltRaw&&ltRaw.summary||{};
+  var ltAllTr = ltRaw&&ltRaw.trends||[];
+  var ltByBot = ltRaw&&ltRaw.by_bot||{};
+  var ltErrors= ltRaw&&ltRaw.error_breakdown||{};
+  var ltSlow  = ltRaw&&ltRaw.slowest_requests||[];
+  var ltHist  = ltRaw&&ltRaw.histogram||{};
+
+  /* user-count filter on trends */
+  var ltTrends = userFilter==="all" ? ltAllTr
+    : ltAllTr.filter(function(t){return String(t.users)===userFilter;});
+
+  /* collect distinct user counts for filter */
+  var ltUserOpts = ["all"].concat(
+    ltAllTr.map(function(t){return String(t.users||"?");})
+      .filter(function(v,i,a){return a.indexOf(v)===i&&v!=="";})
+      .sort()
+  );
+
+  /* ── Infrastructure charts ── */
   var SC={llm:C.primary,retriever:C.teal,tool:C.amber,agent:C.purple,base:C.muted};
   var types=Object.keys(perc||{});
-  var pChart=types.length?{labels:types.map(function(t){return t.toUpperCase();}),datasets:[{label:"P50",data:types.map(function(t){return perc[t].p50;}),backgroundColor:C.primary+"aa",borderRadius:4},{label:"P95",data:types.map(function(t){return perc[t].p95;}),backgroundColor:C.red+"88",borderRadius:4},{label:"P99",data:types.map(function(t){return perc[t].p99;}),backgroundColor:C.purple+"77",borderRadius:4}]}:null;
+  var pChart=types.length?{labels:types.map(function(t){return t.toUpperCase();}),datasets:[
+    {label:"P50",data:types.map(function(t){return perc[t].p50;}),backgroundColor:C.teal+"aa",borderRadius:4},
+    {label:"P90",data:types.map(function(t){return perc[t].p90||perc[t].p95;}),backgroundColor:C.amber+"88",borderRadius:4},
+    {label:"P95",data:types.map(function(t){return perc[t].p95;}),backgroundColor:C.red+"88",borderRadius:4},
+    {label:"P99",data:types.map(function(t){return perc[t].p99;}),backgroundColor:C.purple+"77",borderRadius:4}
+  ]}:null;
+  var trLabels=trData&&trData.map(function(r){return (r.datetime||"").slice(5,16);})||[];
+  var trTypes=trData&&trData.length?Object.keys(trData[0]).filter(function(k){return k.endsWith("_p95");}):[];
+  var trColors=[C.primary,C.teal,C.amber,C.purple,C.red];
+  var infraTrendChart=trData&&trData.length&&trTypes.length?{labels:trLabels,datasets:trTypes.map(function(k,i){return {label:k.replace("_p95","").toUpperCase()+" P95",data:trData.map(function(r){return r[k]||0;}),borderColor:trColors[i%5],backgroundColor:trColors[i%5]+"22",tension:0.4,fill:false,pointRadius:4,pointHoverRadius:7};})}:null;
+
+  /* ── Load Test shared helpers ── */
+  var botColors={public:C.primary,customer:C.teal,private:C.amber};
+  var slaTarget=ltTrends.length?ltTrends[0].sla_p95_target_ms:12000;
+  var ltLabels=ltTrends.map(function(t){
+    var d=(t.datetime||"").slice(5,16);
+    var u=t.users?(" u="+t.users):"";
+    return d+u;
+  });
+
+  /* ── Chart 1: 5-percentile latency trend (k6-style) ── */
+  var ltPercChart=ltTrends.length?{labels:ltLabels,datasets:[
+    {label:"P50",  data:ltTrends.map(function(t){return t.p50_ms;}), borderColor:"#10B981",backgroundColor:"#10B98122",tension:0.35,fill:false,pointRadius:4,pointHoverRadius:8,borderWidth:2},
+    {label:"P75",  data:ltTrends.map(function(t){return t.p75_ms;}), borderColor:"#34D399",backgroundColor:"#34D39922",tension:0.35,fill:false,pointRadius:4,pointHoverRadius:8,borderWidth:1.5,borderDash:[4,2]},
+    {label:"P90",  data:ltTrends.map(function(t){return t.p90_ms;}), borderColor:"#F59E0B",backgroundColor:"#F59E0B22",tension:0.35,fill:false,pointRadius:4,pointHoverRadius:8,borderWidth:2},
+    {label:"P95",  data:ltTrends.map(function(t){return t.p95_ms;}), borderColor:"#F87171",backgroundColor:"#F8717122",tension:0.35,fill:false,pointRadius:5,pointHoverRadius:9,borderWidth:2.5},
+    {label:"P99",  data:ltTrends.map(function(t){return t.p99_ms;}), borderColor:"#A78BFA",backgroundColor:"#A78BFA22",tension:0.35,fill:false,pointRadius:4,pointHoverRadius:8,borderWidth:2,borderDash:[6,3]},
+    {label:"SLA P95 ("+slaTarget+"ms)",data:ltTrends.map(function(){return slaTarget;}),borderColor:"#F87171aa",borderDash:[10,5],pointRadius:0,borderWidth:2,fill:false}
+  ]}:null;
+
+  /* ── Chart 2: Throughput (req/s) + Virtual Users (dual axis) ── */
+  var ltTputChart=ltTrends.length?{labels:ltLabels,datasets:[
+    {label:"Throughput (req/s)",data:ltTrends.map(function(t){return t.throughput_rps;}),backgroundColor:C.primary+"bb",borderRadius:4,yAxisID:"y",type:"bar"},
+    {label:"Virtual Users",    data:ltTrends.map(function(t){return Number(t.users)||0;}),borderColor:C.teal,backgroundColor:"transparent",tension:0.3,fill:false,pointRadius:5,borderWidth:2,yAxisID:"y1",type:"line"}
+  ]}:null;
+
+  /* ── Chart 3: Error Rate + Apdex trend ── */
+  var ltQualChart=ltTrends.length?{labels:ltLabels,datasets:[
+    {label:"Failure Rate (%)",data:ltTrends.map(function(t){return t.failure_rate_pct;}),backgroundColor:C.red+"99",borderRadius:4,yAxisID:"y",type:"bar"},
+    {label:"Apdex (0-1)",    data:ltTrends.map(function(t){return t.apdex;}),borderColor:C.teal,backgroundColor:"transparent",tension:0.3,fill:false,pointRadius:5,borderWidth:2,yAxisID:"y1",type:"line"}
+  ]}:null;
+
+  /* ── Chart 4: Avg + StdDev band ── */
+  var ltAvgChart=ltTrends.length?{labels:ltLabels,datasets:[
+    {label:"Avg (ms)",   data:ltTrends.map(function(t){return t.avg_ms;}),  borderColor:C.primary,backgroundColor:C.primary+"22",tension:0.35,fill:false,pointRadius:4,borderWidth:2},
+    {label:"Min (ms)",   data:ltTrends.map(function(t){return t.min_ms;}),  borderColor:C.teal,  backgroundColor:"transparent",tension:0.35,fill:false,pointRadius:3,borderWidth:1.5,borderDash:[3,2]},
+    {label:"Max (ms)",   data:ltTrends.map(function(t){return t.max_ms;}),  borderColor:C.red,   backgroundColor:"transparent",tension:0.35,fill:false,pointRadius:3,borderWidth:1.5,borderDash:[3,2]},
+    {label:"StdDev (ms)",data:ltTrends.map(function(t){return t.stddev_ms;}),borderColor:C.amber,backgroundColor:"transparent",tension:0.35,fill:false,pointRadius:3,borderWidth:1.5,borderDash:[5,3]}
+  ]}:null;
+
+  /* ── Chart 5: Per-bot comparison (grouped bar P50/P90/P95/P99) ── */
+  var botKeys=Object.keys(ltByBot);
+  var botChart=botKeys.length?{
+    labels:["P50","P75","P90","P95","P99"],
+    datasets:botKeys.map(function(b){return {label:b.charAt(0).toUpperCase()+b.slice(1)+" Bot",data:[ltByBot[b].p50,ltByBot[b].p75,ltByBot[b].p90,ltByBot[b].p95,ltByBot[b].p99],backgroundColor:(botColors[b]||C.purple)+"bb",borderRadius:4};})
+  }:null;
+
+  /* ── Chart 6: Response time histogram (bucket distribution) ── */
+  var histKeys=["0-1s","1-3s","3-5s","5-8s","8-12s","12s+"];
+  var histColors=["#10B981","#34D399","#F59E0B","#FB923C","#F87171","#EF4444"];
+  var histChart=Object.keys(ltHist).length?{
+    labels:histKeys,
+    datasets:[{label:"Requests",data:histKeys.map(function(k){return ltHist[k]||0;}),backgroundColor:histColors,borderRadius:4}]
+  }:null;
+
+  /* ── Chart 7: Token usage per run ── */
+  var tokChart=ltTrends.length?{
+    labels:ltLabels,
+    datasets:[{label:"Avg Tokens / Request",data:ltTrends.map(function(t){return t.avg_tokens;}),backgroundColor:C.purple+"99",borderRadius:4}]
+  }:null;
+
+  /* ── Error breakdown donut ── */
+  var errKeys=Object.keys(ltErrors);
+  var errChart=errKeys.length?{
+    labels:errKeys.map(function(k){return k.length>30?k.slice(0,30)+"…":k;}),
+    datasets:[{data:errKeys.map(function(k){return ltErrors[k];}),backgroundColor:[C.red,C.amber,C.purple,C.teal,C.primary,"#FB923C"]}]
+  }:null;
+
+  /* ── Helpers ── */
+  function tabBtn(id,lbl){
+    var on=activeTab===id;
+    return React.createElement("button",{key:id,onClick:function(){setTab(id);},style:{padding:"7px 22px",borderRadius:8,fontSize:13,fontWeight:700,border:"2px solid "+(on?C.primary:C.border),background:on?C.primarySoft:C.card,color:on?C.primary:C.textSub,cursor:"pointer",transition:"all .15s"}},lbl);
+  }
+  function pill(label,options,active,set){
+    return React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center"}},
+      React.createElement("span",{style:{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}},label+":"),
+      options.map(function(o){var on=active===o;return React.createElement("button",{key:o,onClick:function(){set(o);},style:{padding:"3px 12px",borderRadius:20,fontSize:11,fontWeight:700,border:"1.5px solid "+(on?C.primary:C.border),background:on?C.primarySoft:"transparent",color:on?C.primary:C.textSub,cursor:"pointer",textTransform:"capitalize"}},o);})
+    );
+  }
+  function slaBadge(pass){return React.createElement("span",{style:{padding:"3px 14px",borderRadius:20,fontSize:12,fontWeight:800,background:pass?C.teal+"22":C.red+"22",color:pass?C.teal:C.red,border:"1.5px solid "+(pass?C.teal+"55":C.red+"55")}},pass?"✓ SLA PASS":"✗ SLA FAIL");}
+  function apdexBadge(v){
+    var color=v>=0.94?"#10B981":v>=0.85?"#34D399":v>=0.70?C.amber:C.red;
+    var label=v>=0.94?"Excellent":v>=0.85?"Good":v>=0.70?"Fair":"Poor";
+    return React.createElement("span",{style:{padding:"3px 14px",borderRadius:20,fontSize:12,fontWeight:800,background:color+"22",color:color,border:"1.5px solid "+color+"55"}},label+" ("+v+")");
+  }
+  function kpi(label,value,sub,color,badge){
+    return React.createElement(SCard,null,React.createElement("div",{style:{padding:"14px 16px"}},
+      React.createElement("div",{style:{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},label),
+      badge
+        ? React.createElement("div",{style:{marginTop:8}},badge)
+        : React.createElement("div",{style:{fontSize:24,fontWeight:800,color:color||C.text,margin:"4px 0 2px"}},value),
+      sub&&React.createElement("div",{style:{fontSize:11,color:C.muted,marginTop:3}},sub)
+    ));
+  }
+  function delta(v,invert){
+    if(v==null)return null;
+    var up=v>0,color=invert?(up?C.red:C.teal):(up?C.teal:C.red);
+    return React.createElement("span",{style:{fontSize:10,color:color,marginLeft:4,fontWeight:700}},(up?"▲":"▼")+Math.abs(v));
+  }
+  var dualAxisOpts=function(yLbl,y1Lbl){return {scales:{y:{position:"left",title:{display:true,text:yLbl,color:C.muted,font:{size:10}},ticks:{color:C.muted},grid:{color:C.borderSoft}},y1:{position:"right",grid:{drawOnChartArea:false},title:{display:true,text:y1Lbl,color:C.muted,font:{size:10}},ticks:{color:C.muted}}}};};
+
   return React.createElement(PW,null,
-    pChart&&React.createElement(SCard,null,React.createElement(SHead,null,"Latency by Span Type (ms)"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:pChart,h:210}))),
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:12}},
-      types.map(function(tp){return React.createElement(SCard,{key:tp},React.createElement("div",{style:{padding:12}},
-        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:SC[tp]||C.muted,marginBottom:8,textTransform:"uppercase"}},tp),
-        [["P50",perc[tp].p50],["P95",perc[tp].p95],["P99",perc[tp].p99],["Avg",perc[tp].avg],["Count",perc[tp].count]].map(function(row){return React.createElement("div",{key:row[0],className:"kv"},React.createElement("div",{className:"kk"},row[0]),React.createElement("div",{style:{fontWeight:row[0]==="P99"?700:400}},typeof row[1]==="number"&&row[0]!=="Count"?row[1]+"ms":row[1]));})
-      ));}))
+    /* ── Tab bar ── */
+    React.createElement("div",{style:{display:"flex",gap:10,marginBottom:18}},tabBtn("infra","Infrastructure"),tabBtn("loadtest","Load Testing")),
+
+    /* ════════════════════════════════════════════
+       INFRASTRUCTURE TAB
+    ════════════════════════════════════════════ */
+    activeTab==="infra"&&React.createElement(React.Fragment,null,
+      pChart&&React.createElement(SCard,null,React.createElement(SHead,null,"Latency by Span Type — P50 / P90 / P95 / P99 (ms)"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:pChart,h:220}))),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:12}},
+        types.map(function(tp){return React.createElement(SCard,{key:tp},React.createElement("div",{style:{padding:12}},
+          React.createElement("div",{style:{fontSize:12,fontWeight:700,color:SC[tp]||C.muted,marginBottom:8,textTransform:"uppercase"}},tp),
+          [["P50",perc[tp].p50],["P90",perc[tp].p90||"—"],["P95",perc[tp].p95],["P99",perc[tp].p99],["Avg",perc[tp].avg],["Count",perc[tp].count]].map(function(row){return React.createElement("div",{key:row[0],className:"kv"},React.createElement("div",{className:"kk"},row[0]),React.createElement("div",{style:{fontWeight:row[0]==="P95"||row[0]==="P99"?700:400}},typeof row[1]==="number"&&row[0]!=="Count"?row[1]+"ms":row[1]));})
+        ));})),
+      infraTrendChart&&React.createElement(SCard,null,React.createElement(SHead,null,"P95 Latency Trend by Span Type"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"line",data:infraTrendChart,h:200})))
+    ),
+
+    /* ════════════════════════════════════════════
+       LOAD TEST TAB — ENTERPRISE GRADE
+    ════════════════════════════════════════════ */
+    activeTab==="loadtest"&&React.createElement(React.Fragment,null,
+
+      /* ── Filters ── */
+      React.createElement("div",{style:{display:"flex",gap:16,flexWrap:"wrap",marginBottom:14,padding:"10px 14px",background:C.card,borderRadius:10,border:"1.5px solid "+C.border}},
+        pill("Bot",["all","public","customer","private"],botFilter,setBotFilter),
+        ltUserOpts.length>1&&pill("Users",ltUserOpts,userFilter,setUserFilter)
+      ),
+
+      /* ── KPI Row 1: overview ── */
+      !Object.keys(ltSum).length
+        ? React.createElement(Empty,{icon:"▥",title:"No load test runs yet",sub:"Run: python scripts/run_agent_load_test.py --bot-type public --dashboard-dir <eval_history path>"})
+        : React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))",gap:10,marginBottom:10}},
+            kpi("Total Runs",    ltSum.total_runs,   ltSum.total_runs+" load test runs"),
+            kpi("Total Requests",ltSum.total_requests,ltSum.total_passed+" pass / "+ltSum.total_failed+" fail"),
+            kpi("Avg Throughput",ltSum.avg_throughput_rps+" rps","requests per second"),
+            kpi("Failure Rate",  ltSum.avg_failure_rate_pct+"%","of all requests",ltSum.avg_failure_rate_pct>5?C.red:C.teal),
+            kpi("SLA Status",    null,               "P95 vs "+ltSum.sla_p95_target_ms+"ms",null,slaBadge(ltSum.sla_pass)),
+            kpi("Apdex Score",   null,               "T=3s, 4T=12s satisfied thresholds",null,apdexBadge(ltSum.apdex||0))
+          ),
+
+          /* ── KPI Row 2: all percentiles + stats ── */
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8,marginBottom:14}},
+            [["P50",ltSum.p50_ms,C.teal],["P75",ltSum.p75_ms,C.teal],["P90",ltSum.p90_ms,C.amber],
+             ["P95",ltSum.p95_ms,ltSum.sla_pass?C.teal:C.red],["P99",ltSum.p99_ms,C.red],
+             ["Avg",ltSum.avg_ms,C.text],["Min",ltSum.min_ms,C.teal],["Max",ltSum.max_ms,C.red],["StdDev",ltSum.stddev_ms,C.amber]
+            ].map(function(row){return React.createElement(SCard,{key:row[0]},React.createElement("div",{style:{padding:"10px 12px",textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:.8}},row[0]),
+              React.createElement("div",{style:{fontSize:20,fontWeight:800,color:row[2],marginTop:4}},row[1]!=null?row[1]+"ms":"—")
+            ));})
+          ),
+
+          /* ── Chart: 5-percentile latency trend (main) ── */
+          ltPercChart&&React.createElement(SCard,null,
+            React.createElement(SHead,null,"Response Time Percentiles over Runs (ms) — P50 · P75 · P90 · P95 · P99 + SLA"),
+            React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"line",data:ltPercChart,h:240}))
+          ),
+
+          /* ── Charts row: Throughput+VU  |  Failure+Apdex ── */
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:0}},
+            ltTputChart&&React.createElement(SCard,null,
+              React.createElement(SHead,null,"Throughput (req/s) & Virtual Users per Run"),
+              React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:ltTputChart,h:200,options:dualAxisOpts("req/s","Users")}))
+            ),
+            ltQualChart&&React.createElement(SCard,null,
+              React.createElement(SHead,null,"Failure Rate (%) & Apdex Score per Run"),
+              React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:ltQualChart,h:200,options:dualAxisOpts("%","Apdex")}))
+            )
+          ),
+
+          /* ── Charts row: Avg/Min/Max/StdDev  |  Histogram ── */
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:0}},
+            ltAvgChart&&React.createElement(SCard,null,
+              React.createElement(SHead,null,"Avg / Min / Max / StdDev Latency (ms) per Run"),
+              React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"line",data:ltAvgChart,h:200}))
+            ),
+            histChart&&React.createElement(SCard,null,
+              React.createElement(SHead,null,"Response Time Distribution (all runs)"),
+              React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:histChart,h:200,options:{plugins:{legend:{display:false}}}}))
+            )
+          ),
+
+          /* ── Charts row: Per-bot  |  Token usage ── */
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:0}},
+            botChart&&React.createElement(SCard,null,
+              React.createElement(SHead,null,"Per-Bot Latency Comparison — P50·P75·P90·P95·P99 (ms)"),
+              React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:botChart,h:200}))
+            ),
+            tokChart&&React.createElement(SCard,null,
+              React.createElement(SHead,null,"Avg Token Usage per Run"),
+              React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:tokChart,h:200}))
+            )
+          ),
+
+          /* ── Error breakdown donut + table ── */
+          errChart&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"240px 1fr",gap:12,marginBottom:0}},
+            React.createElement(SCard,null,
+              React.createElement(SHead,null,"Error Breakdown"),
+              React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"doughnut",data:errChart,h:180,options:{plugins:{legend:{position:"bottom",labels:{font:{size:10},color:C.muted}}},scales:{x:{display:false},y:{display:false}}}}))
+            ),
+            React.createElement(SCard,null,React.createElement(SHead,null,"Error Details"),React.createElement("div",{style:{overflowX:"auto"}},
+              React.createElement("table",null,
+                React.createElement("thead",null,React.createElement("tr",null,["Error Type","Count","% of Failures"].map(function(h){return React.createElement("th",{key:h},h);}))),
+                React.createElement("tbody",null,errKeys.map(function(k,i){
+                  var cnt=ltErrors[k];
+                  var pct=ltSum.total_failed?Math.round(cnt/ltSum.total_failed*100):0;
+                  return React.createElement("tr",{key:i},
+                    React.createElement("td",{style:{fontSize:11,color:C.textSub}},k),
+                    React.createElement("td",{style:{fontWeight:700,color:C.red}},cnt),
+                    React.createElement("td",null,React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                      React.createElement("div",{style:{height:6,width:pct+"%",maxWidth:"100%",background:C.red+"88",borderRadius:3}}),
+                      React.createElement("span",{style:{fontSize:10,color:C.muted}},pct+"%")
+                    ))
+                  );
+                }))
+              )
+            ))
+          ),
+
+          /* ── Per-bot summary table ── */
+          botKeys.length&&React.createElement(SCard,null,React.createElement(SHead,null,"Per-Bot Summary — All Metrics"),React.createElement("div",{style:{overflowX:"auto"}},
+            React.createElement("table",null,
+              React.createElement("thead",null,React.createElement("tr",null,
+                ["Bot","Runs","Requests","P50","P75","P90","P95","P99","Avg","Min","Max","StdDev","Apdex","Fail%","Tokens"].map(function(h){return React.createElement("th",{key:h},h);})
+              )),
+              React.createElement("tbody",null,botKeys.map(function(b){var d=ltByBot[b];return React.createElement("tr",{key:b},
+                React.createElement("td",{style:{fontWeight:700,color:botColors[b]||C.text,textTransform:"capitalize"}},b),
+                React.createElement("td",null,d.runs),
+                React.createElement("td",null,d.total_requests),
+                React.createElement("td",null,d.p50+"ms"),
+                React.createElement("td",null,d.p75+"ms"),
+                React.createElement("td",null,d.p90+"ms"),
+                React.createElement("td",{style:{fontWeight:700,color:d.p95>slaTarget?C.red:C.teal}},d.p95+"ms"),
+                React.createElement("td",{style:{color:C.red}},d.p99+"ms"),
+                React.createElement("td",null,d.avg+"ms"),
+                React.createElement("td",{style:{color:C.teal}},d.min+"ms"),
+                React.createElement("td",{style:{color:C.red}},d.max+"ms"),
+                React.createElement("td",{style:{color:C.amber}},d.stddev+"ms"),
+                React.createElement("td",{style:{color:d.apdex>=0.85?C.teal:d.apdex>=0.70?C.amber:C.red,fontWeight:700}},d.apdex),
+                React.createElement("td",{style:{color:d.failure_rate>5?C.red:C.teal}},d.failure_rate+"%"),
+                React.createElement("td",null,d.avg_tokens)
+              );}))
+            )
+          )),
+
+          /* ── Per-run runs table (enterprise: every run as a row) ── */
+          ltTrends.length&&React.createElement(SCard,null,
+            React.createElement(SHead,null,"All Load Test Runs — Full Detail Table"),
+            React.createElement("div",{style:{overflowX:"auto"}},
+              React.createElement("table",null,
+                React.createElement("thead",null,React.createElement("tr",null,
+                  ["Date/Time","Bot","Users","Repeat","Total","Pass","Fail","Fail%","P50","P75","P90","P95","P99","Avg","Min","Max","StdDev","Apdex","Tput rps","Duration","Tokens","SLA"].map(function(h){return React.createElement("th",{key:h},h);})
+                )),
+                React.createElement("tbody",null,ltTrends.map(function(t,i){
+                  var slaOk=t.sla_pass;
+                  return React.createElement("tr",{key:i,style:{background:slaOk?"transparent":"rgba(248,113,113,.04)"}},
+                    React.createElement("td",{style:{fontSize:11,fontFamily:"monospace",color:C.muted,whiteSpace:"nowrap"}},(t.datetime||"").slice(0,16)),
+                    React.createElement("td",null,React.createElement("span",{style:{padding:"2px 8px",borderRadius:12,fontSize:10,background:(botColors[t.bot_type]||C.muted)+"22",color:botColors[t.bot_type]||C.muted,textTransform:"capitalize"}},t.bot_type)),
+                    React.createElement("td",{style:{textAlign:"center"}},t.users||"—"),
+                    React.createElement("td",{style:{textAlign:"center"}},t.repeat||"—"),
+                    React.createElement("td",{style:{textAlign:"center",fontWeight:700}},t.total),
+                    React.createElement("td",{style:{textAlign:"center",color:C.teal}},t.passed),
+                    React.createElement("td",{style:{textAlign:"center",color:t.failed>0?C.red:C.muted}},t.failed),
+                    React.createElement("td",{style:{textAlign:"center",color:t.failure_rate_pct>5?C.red:C.teal,fontWeight:700}},
+                      t.failure_rate_pct+"%",delta(t.fail_rate_delta_pct,true)
+                    ),
+                    React.createElement("td",{style:{color:C.teal}},t.p50_ms+"ms"),
+                    React.createElement("td",null,t.p75_ms+"ms"),
+                    React.createElement("td",{style:{color:C.amber}},t.p90_ms+"ms"),
+                    React.createElement("td",{style:{fontWeight:700,color:slaOk?C.teal:C.red}},t.p95_ms+"ms",delta(t.p95_delta_ms,true)),
+                    React.createElement("td",{style:{color:C.red}},t.p99_ms+"ms"),
+                    React.createElement("td",null,t.avg_ms+"ms"),
+                    React.createElement("td",{style:{color:C.teal}},t.min_ms+"ms"),
+                    React.createElement("td",{style:{color:C.red}},t.max_ms+"ms"),
+                    React.createElement("td",{style:{color:C.amber}},t.stddev_ms+"ms"),
+                    React.createElement("td",{style:{fontWeight:700,color:t.apdex>=0.85?C.teal:t.apdex>=0.70?C.amber:C.red}},t.apdex),
+                    React.createElement("td",null,t.throughput_rps),
+                    React.createElement("td",{style:{color:C.muted}},t.duration_s?t.duration_s+"s":"—"),
+                    React.createElement("td",null,t.avg_tokens),
+                    React.createElement("td",null,React.createElement("span",{className:slaOk?"pill-pass":"pill-fail",style:{fontSize:10}},slaOk?"PASS":"FAIL"))
+                  );
+                }))
+              )
+            )
+          ),
+
+          /* ── Slowest 15 requests ── */
+          ltSlow.length&&React.createElement(SCard,null,
+            React.createElement(SHead,null,"Slowest Requests (Top 15)"),
+            React.createElement("div",{style:{overflowX:"auto"}},
+              React.createElement("table",null,
+                React.createElement("thead",null,React.createElement("tr",null,["#","Request ID","Latency","vs SLA","Bot","Status","Input Preview"].map(function(h){return React.createElement("th",{key:h},h);}))),
+                React.createElement("tbody",null,ltSlow.map(function(r,i){
+                  var over=r.latency_ms>slaTarget;
+                  return React.createElement("tr",{key:i},
+                    React.createElement("td",{style:{color:C.muted,fontSize:11}},i+1),
+                    React.createElement("td",{style:{fontSize:11,fontFamily:"monospace",color:C.muted}},r.name),
+                    React.createElement("td",{style:{fontWeight:700,color:over?C.red:C.teal}},r.latency_ms+"ms"),
+                    React.createElement("td",{style:{fontSize:11,color:over?C.red:C.teal}},over?"+"+(r.latency_ms-slaTarget)+"ms over":"-"+(slaTarget-r.latency_ms)+"ms"),
+                    React.createElement("td",null,React.createElement("span",{style:{padding:"2px 8px",borderRadius:12,fontSize:10,background:(botColors[r.bot_type]||C.muted)+"22",color:botColors[r.bot_type]||C.muted,textTransform:"capitalize"}},r.bot_type)),
+                    React.createElement("td",null,React.createElement("span",{className:r.status==="SUCCESS"?"pill-pass":"pill-fail",style:{fontSize:10}},r.status)),
+                    React.createElement("td",{style:{fontSize:11,color:C.textSub,maxWidth:260,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.input)
+                  );
+                }))
+              )
+            )
+          )
+        ) /* end !Object.keys(ltSum).length */
+    ) /* end loadtest tab */
   );
 }
 
@@ -981,28 +1868,206 @@ function CostPage() {
   );
 }
 
+var FW_META=[
+  {fw:"ragas",        label:"RAGAS Evaluator",    color:"#6366f1", icon:"▥"},
+  {fw:"azure-foundry",label:"Foundry Evaluator",  color:"#10b981", icon:"●"},
+  {fw:"dspy",         label:"DSPy Evaluator",     color:"#f59e0b", icon:"⬣"},
+  {fw:"deepeval",     label:"DeepEval Evaluator",  color:"#a78bfa", icon:"◆"},
+];
+
 function ComparePage() {
   var _ar=useFetch("/api/runs?limit=50",["compR"]),allRuns=_ar.data;
   var _sel=useState([]),sel=_sel[0],setSel=_sel[1];
   var _cq=useState(""),caseQ=_cq[0],setCaseQ=_cq[1];
+  var _showAll=useState(false),showAll=_showAll[0],setShowAll=_showAll[1];
+
+  var runs=allRuns&&allRuns.data||[];
+
   function toggle(f){setSel(function(s){return s.includes(f)?s.filter(function(x){return x!==f;}):s.concat([f]).slice(0,4);});}
+
+  var BOT_PERSONAS=[
+    {key:"public",   label:"Public Bot",   color:"#6366f1", icon:"○", desc:"Public knowledge base only"},
+    {key:"customer", label:"Customer Bot", color:"#10b981", icon:"◐", desc:"Public + customer KB"},
+    {key:"private",  label:"Private Bot",  color:"#f59e0b", icon:"●", desc:"All knowledge bases"},
+  ];
+
+  /* Quick-select: click evaluator type button -> select latest run of that type */
+  function selectEvaluator(fw){
+    var match=runs.filter(function(r){return r.framework===fw&&!r.filename.startsWith("test_run_loadtest_");});
+    if(!match.length)return;
+    var latest=match[0];
+    setSel(function(s){
+      if(s.includes(latest.filename))return s.filter(function(x){return x!==latest.filename;});
+      return s.concat([latest.filename]).slice(0,4);
+    });
+  }
+
+  /* Quick-select by bot persona */
+  function selectBot(botKey){
+    var match=runs.filter(function(r){
+      var hyp=(r.hyperparameters||{});
+      var bt=hyp.bot_type||"";
+      return bt===botKey&&!r.filename.startsWith("test_run_loadtest_");
+    });
+    if(!match.length)return;
+    var latest=match[0];
+    setSel(function(s){
+      if(s.includes(latest.filename))return s.filter(function(x){return x!==latest.filename;});
+      return s.concat([latest.filename]).slice(0,4);
+    });
+  }
+
   var _cmp=useFetch(sel.length>=2?"/api/compare?runs="+sel.join(","):null,["cmp"].concat(sel)),cmp=_cmp.data;
   var _cc=useFetch(sel.length>=2&&caseQ?"/api/compare/cases?runs="+sel.join(",")+"&case="+encodeURIComponent(caseQ):null,["cmpc",caseQ].concat(sel)),cmpC=_cc.data;
   var COLS=[C.primary,C.teal,C.amber,C.purple];
   var allM=[];if(cmp){(cmp||[]).forEach(function(r){Object.keys(r.metrics||{}).forEach(function(k){if(allM.indexOf(k)<0)allM.push(k);});});}
-  var cChart=cmp&&cmp.length&&allM.length?{labels:allM,datasets:(cmp||[]).map(function(r,i){return {label:(r.datetime||"").slice(0,10),data:allM.map(function(m){return +(r.metrics&&r.metrics[m]&&r.metrics[m].avg||0).toFixed(3);}),backgroundColor:COLS[i%4]+"99",borderRadius:4};})}:null;
+  /* metric filter: show only shared metrics in compare chart when all types selected */
+  var _mf=useState("all"),mfCmp=_mf[0],setMfCmp=_mf[1];
+  var METRIC_GROUPS_C={"RAGAS":["Faithfulness","AnswerRelevancy","ContextPrecision","ContextRecall"],"Foundry":["Coherence","Fluency","Relevance","Groundedness","F1Score"],"DSPy":["KeywordPresence","FallbackDetection","FormattingConstraints","CompositeScore"],"DeepEval":["PlayReadyRelevance","PlayReadyFaithfulness","PlayReadyClarity","AnswerRelevancyMetric","FaithfulnessMetric","HallucinationMetric","PIILeakageMetric","NonAdviceMetric","RoleViolationMetric","PromptAlignmentMetric"]};
+  var visM=mfCmp==="all"?allM:(METRIC_GROUPS_C[mfCmp]||allM).filter(function(m){return allM.indexOf(m)>=0;});
+  if(!visM.length)visM=allM;
+  var cChart=cmp&&cmp.length&&visM.length?{labels:visM,datasets:(cmp||[]).map(function(r,i){
+    var fw=r.framework||"ragas";
+    var fwMeta=FW_META.find(function(m){return m.fw===fw;})||{color:COLS[i%4],label:fw};
+    return {label:fwMeta.label+" ("+(r.datetime||"").slice(0,10)+")",data:visM.map(function(m){return +(r.metrics&&r.metrics[m]&&r.metrics[m].avg||0).toFixed(3);}),backgroundColor:fwMeta.color+"99",borderRadius:4};
+  })}:null;
+
+  var runsFull=runs; /* summary now includes hyperparameters.bot_type */
+
   return React.createElement(PW,null,
-    React.createElement(SCard,null,React.createElement(SHead,null,"Select Runs to Compare (max 4)"),React.createElement("div",{style:{padding:12,display:"flex",flexWrap:"wrap",gap:7}},
-      (allRuns&&allRuns.data||[]).map(function(r){var s=sel.includes(r.filename);return React.createElement("button",{key:r.filename,onClick:function(){toggle(r.filename);},style:{padding:"4px 11px",borderRadius:7,fontSize:11,fontWeight:600,border:"1.5px solid "+(s?C.primary:C.border),background:s?C.primarySoft:C.card,color:s?C.primary:C.textSub,cursor:"pointer"}},r.filename.slice(9,22)+" ("+(r.passRate*100).toFixed(0)+"%)");})
-    )),
-    cmp&&cmp.length>=2&&React.createElement(React.Fragment,null,
-      React.createElement("div",{style:{display:"flex",gap:12}},cmp.map(function(r,i){return React.createElement(SCard,{key:i,style:{flex:1,borderTop:"4px solid "+COLS[i]}},React.createElement("div",{style:{padding:13}},React.createElement("div",{style:{fontSize:11,color:C.muted,marginBottom:3}},(r.datetime||"").slice(0,16)),React.createElement("div",{style:{fontSize:12,fontWeight:700}},r.filename&&r.filename.slice(9,22)),React.createElement("div",{style:{fontSize:12,marginTop:6}},React.createElement("b",null,(r.passRate*100).toFixed(0)+"%")," pass")));})),
-      cChart&&React.createElement(SCard,null,React.createElement(SHead,null,"Metric Comparison"),React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:cChart,h:210}))),
-      React.createElement(SCard,null,React.createElement(SHead,null,"Test Case Diff"),React.createElement("div",{style:{padding:12,display:"flex",gap:10}},React.createElement(Inp,{value:caseQ,onChange:function(e){setCaseQ(e.target.value);},placeholder:"Enter exact test case name..."})),
-        cmpC&&cmpC.length>0&&React.createElement("div",{style:{overflowX:"auto"}},React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Run"),React.createElement("th",null,"Status"),allM.map(function(m){return React.createElement("th",{key:m},m);}))),React.createElement("tbody",null,cmpC.map(function(r,i){return React.createElement("tr",{key:i},React.createElement("td",{style:{fontSize:11,color:C.muted}},(r.datetime||"").slice(0,10)),React.createElement("td",null,React.createElement("span",{className:r.success?"pill-pass":"pill-fail",style:{fontSize:10}},r.success?"PASS":"FAIL")),allM.map(function(m){return React.createElement("td",{key:m,style:{fontWeight:700,color:r.metrics&&r.metrics[m]&&r.metrics[m].success?C.teal:C.red}},r.metrics&&r.metrics[m]&&r.metrics[m].score!=null?r.metrics[m].score.toFixed(3):"--");}));}))))
+    /* ── Quick-Select Panel ── */
+    React.createElement(SCard,null,React.createElement(SHead,null,"Compare Runs"),
+      React.createElement("div",{style:{padding:"14px 16px"}},
+        React.createElement("div",{style:{fontSize:12,color:C.muted,marginBottom:14}},"Select up to 4 runs. Use evaluator or persona buttons for quick selection, or expand to pick individual runs."),
+
+        /* Row 1: Evaluator quick-select */
+        React.createElement("div",{style:{marginBottom:14}},
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:C.muted,letterSpacing:".06em",marginBottom:8}},"BY EVALUATOR"),
+          React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:10}},
+            FW_META.map(function(meta){
+              var latestOfType=runs.filter(function(r){return r.framework===meta.fw&&!r.filename.startsWith("test_run_loadtest_");});
+              var latestFname=latestOfType.length?latestOfType[0].filename:null;
+              var active=latestFname&&sel.includes(latestFname);
+              var available=latestOfType.length>0;
+              return React.createElement("button",{key:meta.fw,disabled:!available,onClick:function(){if(available)selectEvaluator(meta.fw);},
+                style:{padding:"10px 18px",borderRadius:10,fontSize:12,fontWeight:700,cursor:available?"pointer":"not-allowed",
+                  border:"2px solid "+(active?meta.color:C.border),
+                  background:active?meta.color+"22":C.card,
+                  color:active?meta.color:available?C.text:C.muted,
+                  display:"flex",flexDirection:"column",alignItems:"center",gap:3,minWidth:130,transition:"all .15s",
+                  boxShadow:active?"0 0 0 3px "+meta.color+"44":void 0}},
+                React.createElement("span",{style:{fontSize:20}},meta.icon||"▤"),
+                React.createElement("span",null,meta.label),
+                React.createElement("span",{style:{fontSize:10,color:active?meta.color:C.muted}},available?latestOfType.length+" run"+(latestOfType.length>1?"s":""):"No runs")
+              );
+            })
+          )
+        ),
+
+        /* Row 2: Bot Persona quick-select */
+        React.createElement("div",{style:{marginBottom:14}},
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:C.muted,letterSpacing:".06em",marginBottom:8}},"BY BOT PERSONA"),
+          React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:10}},
+            BOT_PERSONAS.map(function(persona){
+              var match=runsFull.filter(function(r){
+                return (r.hyperparameters&&r.hyperparameters.bot_type)===persona.key&&!r.filename.startsWith("test_run_loadtest_");
+              });
+              var latestFname=match.length?match[0].filename:null;
+              var active=latestFname&&sel.includes(latestFname);
+              var available=match.length>0;
+              return React.createElement("button",{key:persona.key,disabled:!available,
+                onClick:function(){if(available)selectBot(persona.key);},
+                style:{padding:"10px 18px",borderRadius:10,fontSize:12,fontWeight:700,cursor:available?"pointer":"not-allowed",
+                  border:"2px solid "+(active?persona.color:C.border),
+                  background:active?persona.color+"22":C.card,
+                  color:active?persona.color:available?C.text:C.muted,
+                  display:"flex",flexDirection:"column",alignItems:"center",gap:3,minWidth:130,transition:"all .15s",
+                  boxShadow:active?"0 0 0 3px "+persona.color+"44":void 0}},
+                React.createElement("span",{style:{fontSize:20}},persona.icon),
+                React.createElement("span",null,persona.label),
+                React.createElement("span",{style:{fontSize:10,color:active?persona.color:C.muted}},available?match.length+" run"+(match.length>1?"s":""):"No runs yet")
+              );
+            })
+          )
+        ),
+
+        /* Row 3: Expand individual run picker */
+        React.createElement("div",{style:{borderTop:"1px solid "+C.border,paddingTop:10}},
+          React.createElement("button",{onClick:function(){setShowAll(!showAll);},style:{fontSize:11,color:C.primary,background:"none",border:"none",cursor:"pointer",padding:0,fontWeight:600}},showAll?"▲ Hide individual runs":"▼ Show all individual runs"),
+          showAll&&React.createElement("div",{style:{marginTop:10,display:"flex",flexWrap:"wrap",gap:6}},
+            runs.map(function(r){
+              var s=sel.includes(r.filename);
+              var fwMeta2=FW_META.find(function(m){return m.fw===r.framework;})||{color:"#6b7280"};
+              var fwC2=fwMeta2.color;
+              var bt=(r.hyperparameters&&r.hyperparameters.bot_type)||"";
+              return React.createElement("button",{key:r.filename,onClick:function(){toggle(r.filename);},
+                style:{padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:600,
+                  border:"1.5px solid "+(s?C.primary:C.border),
+                  background:s?C.primarySoft:C.card,color:s?C.primary:C.textSub,cursor:"pointer",
+                  display:"flex",alignItems:"center",gap:5}},
+                React.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:fwC2,flexShrink:0,display:"inline-block"}}),
+                React.createElement("span",null,r.filename.slice(9,22)),
+                bt&&React.createElement("span",{style:{fontSize:9,color:C.muted,marginLeft:2}},"["+bt+"]"),
+                React.createElement("span",{style:{fontSize:10,color:C.muted}}," "+(r.passRate*100).toFixed(0)+"%")
+              );
+            })
+          )
+        ),
+        sel.length>0&&React.createElement("div",{style:{marginTop:10,fontSize:12,color:C.muted,fontWeight:600}},
+          "Selected: "+sel.length+"/4"+((sel.length>=2)?" — scroll down to see results":" — select one more run to compare")
+        )
       )
     ),
-    sel.length<2&&React.createElement(Empty,{title:"Select 2+ runs above to compare",icon:"Compare"})
+    /* ── Comparison Results ── */
+    cmp&&cmp.length>=2&&React.createElement(React.Fragment,null,
+      React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap"}},cmp.map(function(r,i){
+        var fw=r.framework||"ragas";
+        var fwMeta=FW_META.find(function(m){return m.fw===fw;})||{color:COLS[i%4],label:fw};
+        return React.createElement(SCard,{key:i,style:{flex:1,minWidth:180,borderTop:"4px solid "+fwMeta.color}},
+          React.createElement("div",{style:{padding:13}},
+            React.createElement("div",{style:{fontSize:10,background:fwMeta.color+"22",color:fwMeta.color,borderRadius:20,padding:"2px 8px",display:"inline-block",fontWeight:700,marginBottom:6}},fwMeta.label),
+            React.createElement("div",{style:{fontSize:11,color:C.muted,marginBottom:3}},(r.datetime||"").slice(0,16)),
+            React.createElement("div",{style:{fontSize:12,fontWeight:700}},r.filename&&r.filename.slice(9,22)),
+            React.createElement("div",{style:{fontSize:13,marginTop:6}},
+              React.createElement("span",{style:{fontWeight:700,color:fwMeta.color}},Math.round((r.passRate||0)*100)+"%"),
+              React.createElement("span",{style:{color:C.muted,fontSize:11}}," pass rate")
+            ),
+            React.createElement("div",{style:{fontSize:11,color:C.muted,marginTop:2}},Object.keys(r.metrics||{}).length+" metrics")
+          )
+        );
+      })),
+      cChart&&React.createElement(SCard,null,
+        React.createElement(SHead,null,
+          "Metric Comparison",
+          React.createElement("div",{style:{display:"flex",gap:6,marginLeft:"auto"}},
+            ["all","RAGAS","Foundry","DSPy","DeepEval"].map(function(g){
+              var a=mfCmp===g;
+              return React.createElement("button",{key:g,onClick:function(){setMfCmp(g);},
+                style:{padding:"3px 10px",borderRadius:6,fontSize:10,fontWeight:a?700:500,
+                  border:"1px solid "+(a?C.primary:C.border),
+                  background:a?C.primarySoft:"transparent",
+                  color:a?C.primary:C.muted,cursor:"pointer"}},g==="all"?"All":g);
+            })
+          )
+        ),
+        React.createElement("div",{style:{padding:14}},React.createElement(ChartCanvas,{type:"bar",data:cChart,h:280,options:{plugins:{legend:{position:"bottom"}},scales:{y:{min:0,max:1,ticks:{callback:function(v){return v.toFixed(1);}}}}}}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Test Case Diff"),
+        React.createElement("div",{style:{padding:12,display:"flex",gap:10}},React.createElement(Inp,{value:caseQ,onChange:function(e){setCaseQ(e.target.value);},placeholder:"Enter exact test case name..."})),
+        cmpC&&cmpC.length>0&&React.createElement("div",{style:{overflowX:"auto"}},
+          React.createElement("table",null,
+            React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Run"),React.createElement("th",null,"Status"),allM.map(function(m){return React.createElement("th",{key:m},m);})))  ,
+            React.createElement("tbody",null,cmpC.map(function(r,i){
+              return React.createElement("tr",{key:i},
+                React.createElement("td",{style:{fontSize:11,color:C.muted}},(r.datetime||"").slice(0,10)),
+                React.createElement("td",null,React.createElement("span",{className:r.success?"pill-pass":"pill-fail",style:{fontSize:10}},r.success?"PASS":"FAIL")),
+                allM.map(function(m){return React.createElement("td",{key:m,style:{fontWeight:700,color:r.metrics&&r.metrics[m]&&r.metrics[m].success?C.teal:C.red}},r.metrics&&r.metrics[m]&&r.metrics[m].score!=null?r.metrics[m].score.toFixed(3):"--");})
+              );
+            }))
+          )
+        )
+      )
+    ),
+    sel.length<2&&React.createElement(Empty,{title:"Select 2+ evaluators above to compare",icon:"▥",sub:"Click RAGAS, Foundry, and DSPy to compare frameworks head-to-head"})
   );
 }
 
@@ -1115,20 +2180,188 @@ function BugsPage(props) {
 /* ─── TRACES PAGE ────────────────────────────────────────────────────────── */
 function TracesPage(props) {
   var go=props.go;
+  var STYPE_COLOR={llm:"#6366f1",retriever:"#10b981",tool:"#f59e0b",agent:"#a855f7",base:"#6b7280"};
+  var STYPE_LABELS={llm:"LLM",retriever:"Retriever",tool:"Tool",agent:"Agent",base:"Base"};
+
+  /* ── state ── */
   var _pg=useState(1),pg=_pg[0],setPg=_pg[1];
   var _s=useState(""),search=_s[0],setSearch=_s[1];
-  var _d=useFetch("/api/traces?page="+pg+"&limit=40"+(search?"&search="+search:""),["traces",pg,search]),data=_d.data,loading=_d.loading;
+  var _st=useState("all"),stFilter=_st[0],setStFilter=_st[1];
+  var _sp=useState("all"),spFilter=_sp[0],setSpFilter=_sp[1];
+  var _exp=useState(null),expanded=_exp[0],setExpanded=_exp[1];
+  var _wf=useState({}),wfCache=_wf[0],setWfCache=_wf[1];
+
+  /* ── data ── */
+  var qp="page="+pg+"&limit=40"+(search?"&search="+encodeURIComponent(search):"")+(stFilter!=="all"?"&status="+stFilter:"")+(spFilter!=="all"?"&span_type="+spFilter:"");
+  var _d=useFetch("/api/traces?"+qp,["traces",pg,search,stFilter,spFilter]),data=_d.data,loading=_d.loading;
+  var _stats=useFetch("/api/traces/stats",["tstats"]),stats=_stats.data;
+
+  /* ── load waterfall on expand ── */
+  function toggleWaterfall(traceId){
+    if(expanded===traceId){setExpanded(null);return;}
+    setExpanded(traceId);
+    if(wfCache[traceId])return;
+    fetch("/api/traces/"+traceId).then(function(r){return r.json();}).then(function(d){
+      setWfCache(function(prev){var next=Object.assign({},prev);next[traceId]=d;return next;});
+    });
+  }
+
+  /* ── waterfall renderer ── */
+  function WaterfallView(props){
+    var trace=props.trace;
+    if(!trace)return React.createElement(Loading,null);
+    var allSpans=[];
+    ["llmSpans","retrieverSpans","toolSpans","agentSpans","baseSpans"].forEach(function(k){
+      (trace[k]||[]).forEach(function(s){allSpans.push(Object.assign({},s,{_stype:k.replace("Spans","").toLowerCase()}));});
+    });
+    if(!allSpans.length)return React.createElement("div",{style:{padding:12,color:C.muted,fontSize:12}},"No spans recorded");
+
+    /* compute offsets */
+    var traceStart=trace.startTime?new Date(trace.startTime).getTime():null;
+    var traceEnd=trace.endTime?new Date(trace.endTime).getTime():null;
+    var totalMs=(traceStart&&traceEnd)?(traceEnd-traceStart):0;
+    allSpans.sort(function(a,b){return new Date(a.startTime||0)-new Date(b.startTime||0);});
+
+    return React.createElement("div",{style:{padding:"10px 14px",background:C.bg,borderTop:"1px solid "+C.border}},
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:C.muted,marginBottom:8,display:"flex",gap:16}},
+        React.createElement("span",null,"Span Waterfall"),
+        React.createElement("span",null,"Total: "+(totalMs<1000?totalMs.toFixed(0)+"ms":(totalMs/1000).toFixed(2)+"s")),
+        Object.keys(STYPE_COLOR).map(function(t){
+          return React.createElement("span",{key:t,style:{display:"flex",alignItems:"center",gap:4}},
+            React.createElement("span",{style:{width:10,height:10,borderRadius:2,background:STYPE_COLOR[t],display:"inline-block"}}),
+            React.createElement("span",{style:{color:C.muted}},STYPE_LABELS[t]));
+        })
+      ),
+      allSpans.map(function(span,i){
+        var spanStart=span.startTime?new Date(span.startTime).getTime():traceStart;
+        var spanEnd=span.endTime?new Date(span.endTime).getTime():spanStart;
+        var spanMs=spanEnd-spanStart;
+        var offsetPct=totalMs>0&&traceStart?((spanStart-traceStart)/totalMs*100):0;
+        var widthPct=totalMs>0?Math.max(0.5,spanMs/totalMs*100):10;
+        var stype=span._stype||"base";
+        var color=STYPE_COLOR[stype]||STYPE_COLOR.base;
+        var isErr=(span.status||"").toUpperCase()==="ERRORED";
+        var tok=(span.inputTokenCount||0)+(span.outputTokenCount||0);
+        return React.createElement("div",{key:i,style:{marginBottom:5}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:2}},
+            React.createElement("div",{style:{width:90,fontSize:10,color:STYPE_COLOR[stype],fontWeight:600,flexShrink:0}},STYPE_LABELS[stype]),
+            React.createElement("div",{style:{flex:1,height:18,background:C.border,borderRadius:3,position:"relative",overflow:"hidden"}},
+              React.createElement("div",{style:{position:"absolute",left:offsetPct+"%",width:widthPct+"%",height:"100%",background:isErr?C.red:color,borderRadius:3,minWidth:4,opacity:.85}})
+            ),
+            React.createElement("div",{style:{fontSize:10,color:C.muted,width:70,textAlign:"right",flexShrink:0}},spanMs<1000?spanMs.toFixed(0)+"ms":(spanMs/1000).toFixed(2)+"s")
+          ),
+          React.createElement("div",{style:{paddingLeft:98,fontSize:10,color:C.muted,display:"flex",gap:10,flexWrap:"wrap"}},
+            React.createElement("span",{style:{fontWeight:600,color:C.textSub}},span.name||"—"),
+            span.model&&React.createElement("span",null,"model: ",span.model,(span.provider?" / "+span.provider:"")),
+            tok>0&&React.createElement("span",null,"tokens: ",tok),
+            span.embedder&&React.createElement("span",null,"embedder: ",span.embedder),
+            span.topK&&React.createElement("span",null,"top-k: ",span.topK),
+            span.chunkSize&&React.createElement("span",null,"chunk: ",span.chunkSize),
+            span.description&&React.createElement("span",{style:{color:C.muted}},span.description.slice(0,60)),
+            isErr&&React.createElement("span",{style:{color:C.red}},"● ",(span.error||"").slice(0,80))
+          )
+        );
+      })
+    );
+  }
+
+  /* ── charts data ── */
+  var stc=(stats&&stats.spanTypeCounts)||{};
+  var donutData={labels:Object.keys(stc).map(function(k){return STYPE_LABELS[k]||k;}),datasets:[{data:Object.values(stc),backgroundColor:Object.keys(stc).map(function(k){return STYPE_COLOR[k]||"#888";}),borderWidth:0}]};
+  var dbc=(stats&&stats.durationBuckets)||{};
+  var durData={labels:Object.keys(dbc),datasets:[{label:"Traces",data:Object.values(dbc),backgroundColor:[C.teal+"bb",C.teal+"99",C.amber+"bb",C.red+"99",C.red+"cc"],borderRadius:4}]};
+
+  /* ── KPI ── */
+  function kpi(label,val,color){
+    return React.createElement("div",{style:{background:C.card,border:"1px solid "+C.border,borderRadius:10,padding:"11px 16px",minWidth:100}},
+      React.createElement("div",{style:{fontSize:10,color:C.muted,marginBottom:3}},label),
+      React.createElement("div",{style:{fontSize:20,fontWeight:800,color:color||C.text}},val==null?"—":val));
+  }
+
+  var errRate=stats?Math.round((stats.errorRate||0)*100):null;
+
   return React.createElement(PW,null,
-    React.createElement("div",{className:"filter-bar"},React.createElement(Inp,{value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search traces...",style:{width:260,minHeight:28}}),React.createElement("div",{style:{marginLeft:"auto",fontSize:12,color:C.muted}},(data&&data.total||0)+" traces")),
+    /* filter bar */
+    React.createElement("div",{className:"filter-bar"},
+      React.createElement(Inp,{value:search,onChange:function(e){setSearch(e.target.value);setPg(1);},placeholder:"Search traces, test cases, inputs...",style:{width:280,minHeight:28}}),
+      React.createElement(Sel,{value:stFilter,onChange:function(e){setStFilter(e.target.value);setPg(1);},style:{width:130}},
+        React.createElement("option",{value:"all"},"All Status"),
+        React.createElement("option",{value:"OK"},"OK"),
+        React.createElement("option",{value:"ERRORED"},"Errored")),
+      React.createElement(Sel,{value:spFilter,onChange:function(e){setSpFilter(e.target.value);setPg(1);},style:{width:140}},
+        React.createElement("option",{value:"all"},"All Span Types"),
+        ["llm","retriever","tool","agent","base"].map(function(t){return React.createElement("option",{key:t,value:t},STYPE_LABELS[t]);})),
+      React.createElement("div",{style:{marginLeft:"auto",fontSize:12,color:C.muted}},(data&&data.total||0)+" traces")
+    ),
+
+    /* KPI row */
+    React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
+      kpi("Total Traces",stats&&stats.total),
+      kpi("Errored",stats&&stats.errored,stats&&stats.errored>0?C.red:C.teal),
+      kpi("Error Rate",errRate!=null?errRate+"%":null,errRate>10?C.red:errRate>0?C.amber:C.teal),
+      kpi("Total Spans",stats&&stats.totalSpans),
+      kpi("Avg Spans/Trace",stats&&stats.avgSpansPerTrace),
+      kpi("Avg Duration",stats&&stats.avgDurationMs!=null?(stats.avgDurationMs/1000).toFixed(2)+"s":null),
+      kpi("P95 Duration",stats&&stats.p95DurationMs!=null?(stats.p95DurationMs/1000).toFixed(2)+"s":null,stats&&stats.p95DurationMs>10000?C.red:C.text),
+      kpi("Total Tokens",stats&&stats.totalTokens!=null?stats.totalTokens.toLocaleString():null)
+    ),
+
+    /* mini charts row */
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}},
+      React.createElement(SCard,null,React.createElement(SHead,null,"Span Type Distribution"),
+        React.createElement("div",{style:{padding:14}},
+          Object.keys(stc).length?React.createElement(ChartCanvas,{type:"doughnut",data:donutData,h:180,options:{plugins:{legend:{position:"right"}}}}):React.createElement(Empty,{title:"No span data"}))),
+      React.createElement(SCard,null,React.createElement(SHead,null,"Trace Duration Distribution"),
+        React.createElement("div",{style:{padding:14}},
+          Object.values(dbc).some(function(v){return v>0;})?React.createElement(ChartCanvas,{type:"bar",data:durData,h:180,options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}}):React.createElement(Empty,{title:"No duration data"})))
+    ),
+
+    /* trace table */
     React.createElement(SCard,null,
-      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Trace Name"),React.createElement("th",null,"Test Case"),React.createElement("th",null,"Run"),React.createElement("th",null,"Status"),React.createElement("th",null,"Spans"),React.createElement("th",null,"Time"))),
-        React.createElement("tbody",null,(data&&data.data||[]).map(function(tr,i){return React.createElement("tr",{key:i,style:{cursor:"pointer"},onClick:function(){go("case",{rf:tr.filename,cn:tr.testCase});}},
-          React.createElement("td",{style:{fontWeight:600}},tr.traceName||"--"),React.createElement("td",{style:{fontSize:12}},tr.testCase),React.createElement("td",{style:{fontSize:11,color:C.muted}},tr.filename&&tr.filename.slice(9,22)),
-          React.createElement("td",null,React.createElement("span",{className:tr.status==="ERRORED"?"pill-fail":"pill-pass",style:{fontSize:10}},tr.status||"SUCCESS")),
-          React.createElement("td",null,tr.spanCount||0),React.createElement("td",{style:{fontSize:11,color:C.muted}},(tr.startTime||"").slice(0,16).replace("T"," ")));
+      loading?React.createElement(Loading,null):React.createElement("table",null,
+        React.createElement("thead",null,React.createElement("tr",null,
+          React.createElement("th",null,""),
+          React.createElement("th",null,"Trace / Test Case"),
+          React.createElement("th",null,"Run"),
+          React.createElement("th",null,"Status"),
+          React.createElement("th",null,"Duration"),
+          React.createElement("th",null,"Spans"),
+          React.createElement("th",null,"Tokens"),
+          React.createElement("th",null,"Time")
+        )),
+        React.createElement("tbody",null,(data&&data.data||[]).map(function(tr,i){
+          var isExp=expanded===tr.traceId;
+          var wf=wfCache[tr.traceId];
+          var hasErr=tr.status==="ERRORED";
+          return React.createElement(React.Fragment,{key:i},
+            React.createElement("tr",{style:{cursor:"pointer",background:isExp?"rgba(99,102,241,.07)":i%2===0?C.bg:"transparent"},onClick:function(){toggleWaterfall(tr.traceId);}},
+              React.createElement("td",{style:{fontSize:12,color:C.muted,padding:"6px 8px"}},isExp?"▼":"▶"),
+              React.createElement("td",null,
+                React.createElement("div",{style:{fontWeight:600,fontSize:12}},tr.traceName||tr.testCase||"—"),
+                React.createElement("div",{style:{fontSize:10,color:C.muted,marginTop:2}},(tr.input||"").slice(0,90)+(tr.input&&tr.input.length>90?"…":""))
+              ),
+              React.createElement("td",{style:{fontSize:11,color:C.muted}},tr.filename&&tr.filename.slice(9,22)),
+              React.createElement("td",null,React.createElement("span",{className:hasErr?"pill-fail":"pill-pass",style:{fontSize:10}},tr.status||"OK")),
+              React.createElement("td",{style:{fontSize:12,color:tr.durationMs>10000?C.red:C.text}},tr.durationMs!=null?(tr.durationMs/1000).toFixed(2)+"s":"—"),
+              React.createElement("td",null,
+                React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
+                  Object.entries(tr.spanTypeCounts||{}).filter(function(e){return e[1]>0;}).map(function(e){
+                    return React.createElement("span",{key:e[0],style:{fontSize:9,padding:"1px 5px",borderRadius:10,background:(STYPE_COLOR[e[0]]||"#888")+"33",color:STYPE_COLOR[e[0]]||"#888",fontWeight:700}},STYPE_LABELS[e[0]],": ",e[1]);
+                  })
+                )
+              ),
+              React.createElement("td",{style:{fontSize:11,color:C.muted}},tr.totalTokens>0?tr.totalTokens.toLocaleString():"—"),
+              React.createElement("td",{style:{fontSize:11,color:C.muted}},(tr.startTime||"").slice(0,16).replace("T"," "))
+            ),
+            isExp&&React.createElement("tr",null,
+              React.createElement("td",{colSpan:8,style:{padding:0}},
+                React.createElement(WaterfallView,{trace:wf})
+              )
+            )
+          );
         }))
       ),
-      !loading&&!(data&&data.data&&data.data.length)&&React.createElement(Empty,{title:"No traces",sub:"Add @observe decorators to capture traces"}),
+      !loading&&!(data&&data.data&&data.data.length)&&React.createElement(Empty,{title:"No traces found",sub:"Adjust filters or add @observe decorators to capture traces"}),
       React.createElement(Pages,{page:pg,total:(data&&data.total)||0,limit:40,onPage:setPg})
     )
   );
@@ -2312,11 +3545,18 @@ function App() {
   var pageF = PAGES[nav.p] || PAGES.dash;
 
   return React.createElement(ToastProvider,null,
-    React.createElement("div",{style:{display:"flex",height:"100vh",overflow:"hidden",background:C.bg}},
+    React.createElement("div",{style:{display:"flex",height:"100vh",overflow:"hidden",position:"relative",background:"linear-gradient(165deg,#161B26,#0A0D13)"}},
       React.createElement(Sidebar,{active:nav.p,go:go}),
-      React.createElement("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
+      React.createElement("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1}},
         React.createElement(Topbar,{title:TITLES[nav.p]||"Dashboard",sub:nav.rf?nav.rf.slice(9,26)+"...":null,envs:envList||[],vers:verList||[],env:env,setEnv:setEnv,ver:ver,setVer:setVer,projs:projList||[],proj:proj,setProj:setProj,user:authed,onLogout:logout}),
-        React.createElement("div",{key:nav.p+(nav.rf||"")+(nav.cn||""),style:{flex:1,overflowY:"auto",background:C.bg},className:"fade-in"},pageF())
+        React.createElement("div",{key:nav.p+(nav.rf||"")+(nav.cn||""),style:{flex:1,overflowY:"auto",background:"transparent"},className:"fade-in"},pageF()),
+        React.createElement("div",{style:{height:30,flexShrink:0,borderTop:"1px solid rgba(255,255,255,.06)",background:"rgba(255,255,255,.025)",display:"flex",alignItems:"center",justifyContent:"center",gap:7}},
+          React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:"#6366F1"}}),
+          React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:"#10B981"}}),
+          React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:"#F59E0B"}}),
+          React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:"#A78BFA"}}),
+          React.createElement("span",{style:{fontSize:10,color:"rgba(255,255,255,.75)",marginLeft:6,letterSpacing:".04em"}},"Lattice — Evaluation Dashboard")
+        )
       )
     )
   );

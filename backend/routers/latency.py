@@ -3,6 +3,7 @@ from typing import Optional
 from backend.services.run_loader import get_all_runs
 from backend.services.aggregator import (
     compute_latency_percentiles, compute_latency_trends, get_slowest_spans,
+    compute_loadtest_summary,
 )
 
 router = APIRouter(prefix="/api/latency", tags=["latency"])
@@ -36,3 +37,22 @@ def _filtered(env=None, version=None):
     if version and version != "all":
         runs = [r for r in runs if r["_version"] == version]
     return runs
+
+
+@router.get("/loadtest")
+def loadtest(bot_type: Optional[str] = None):
+    runs = get_all_runs()
+    load_runs = [r for r in runs if (r.get("_filename") or "").startswith("test_run_loadtest_")]
+    if bot_type and bot_type != "all":
+        load_runs = [r for r in load_runs if (r.get("hyperparameters") or {}).get("bot_type") == bot_type]
+    return compute_loadtest_summary(load_runs)
+
+
+@router.get("/loadtest/trends")
+def loadtest_trends(bot_type: Optional[str] = None):
+    runs = get_all_runs()
+    load_runs = [r for r in runs if (r.get("_filename") or "").startswith("test_run_loadtest_")]
+    if bot_type and bot_type != "all":
+        load_runs = [r for r in load_runs if (r.get("hyperparameters") or {}).get("bot_type") == bot_type]
+    summary = compute_loadtest_summary(load_runs)
+    return summary.get("trends", [])

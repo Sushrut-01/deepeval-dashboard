@@ -129,6 +129,32 @@ def _scan_folder():
                 logger.warning(f"run_loader: callback error for {fname}: {e}")
 
 
+_FRAMEWORK_LABELS = {
+    "ragas":         "RAGAS Evaluator",
+    "azure-foundry": "Foundry Evaluator",
+    "dspy":          "DSPy Evaluator",
+    "deepeval":      "DeepEval Evaluator",
+}
+
+def _detect_framework(raw: dict, filename: str) -> tuple[str, str]:
+    """Return (framework_key, human_label) for a run."""
+    hyper = raw.get("hyperparameters") or {}
+    fw = (hyper.get("framework") or "").lower()
+    if not fw:
+        # Infer from filename
+        fn = filename.lower()
+        if "foundry" in fn:
+            fw = "azure-foundry"
+        elif "dspy" in fn:
+            fw = "dspy"
+        elif "loadtest" in fn:
+            fw = "ragas"
+        else:
+            fw = "ragas"
+    label = _FRAMEWORK_LABELS.get(fw, fw.capitalize() + " Evaluator")
+    return fw, label
+
+
 def _parse_run(raw: dict, filename: str, mtime: float) -> dict:
     """Normalise a raw JSON dict into our internal run format."""
     from backend.services.env_detector import detect_environment, detect_version, detect_project
@@ -137,6 +163,7 @@ def _parse_run(raw: dict, filename: str, mtime: float) -> dict:
     env   = detect_environment(raw)
     ver   = detect_version(raw)
     proj  = detect_project(raw)
+    framework, evaluator_label = _detect_framework(raw, filename)
 
     # Normalise test cases
     test_cases = [_parse_llm_case(tc) for tc in (raw.get("testCases") or [])]
@@ -154,12 +181,14 @@ def _parse_run(raw: dict, filename: str, mtime: float) -> dict:
     error_rate = round(errored / len(all_spans), 4) if all_spans else 0.0
 
     return {
-        "_filename":    filename,
-        "_mtime":       mtime,
-        "_datetime":    _fmt_time(mtime),
-        "_environment": env,
-        "_version":     ver,
-        "_project":     proj,
+        "_filename":       filename,
+        "_mtime":          mtime,
+        "_datetime":       _fmt_time(mtime),
+        "_environment":    env,
+        "_version":        ver,
+        "_project":        proj,
+        "_framework":      framework,
+        "_evaluatorLabel": evaluator_label,
         "testFile":     raw.get("testFile"),
         "testCases":    test_cases,
         "conversationalTestCases": conv_cases,
@@ -317,24 +346,34 @@ def _parse_metrics_scores(raw_list: list) -> list:
 
 def _make_summary(run: dict) -> dict:
     """Lightweight summary for list views (no test case bodies)."""
+    hyper = run.get("hyperparameters") or {}
     return {
-        "filename":     run["_filename"],
-        "datetime":     run["_datetime"],
-        "mtime":        run["_mtime"],
-        "environment":  run["_environment"],
-        "version":      run["_version"],
-        "project":      run["_project"],
-        "testPassed":   run["testPassed"],
-        "testFailed":   run["testFailed"],
-        "runDuration":  run["runDuration"],
+        "filename":       run["_filename"],
+        "datetime":       run["_datetime"],
+        "mtime":          run["_mtime"],
+        "environment":    run["_environment"],
+        "version":        run["_version"],
+        "project":        run["_project"],
+        "framework":      run["_framework"],
+        "evaluatorLabel": run["_evaluatorLabel"],
+        "testPassed":     run["testPassed"],
+        "testFailed":     run["testFailed"],
+        "runDuration":    run["runDuration"],
         "evaluationCost": run["evaluationCost"],
-        "passRate":     run["_passRate"],
-        "errorRate":    run["_errorRate"],
-        "caseCount":    run["_caseCount"],
-        "hasTraces":    run["_hasTraces"],
-        "metricsScores": run["metricsScores"],
-        "identifier":   run.get("identifier"),
-        "datasetAlias": run.get("datasetAlias"),
+        "passRate":       run["_passRate"],
+        "errorRate":      run["_errorRate"],
+        "caseCount":      run["_caseCount"],
+        "hasTraces":      run["_hasTraces"],
+        "metricsScores":  run["metricsScores"],
+        "identifier":     run.get("identifier"),
+        "datasetAlias":   run.get("datasetAlias"),
+        "hyperparameters": {
+            "bot_type":    hyper.get("bot_type", ""),
+            "framework":   hyper.get("framework", ""),
+            "model":       hyper.get("model", ""),
+            "environment": hyper.get("environment", ""),
+            "version":     hyper.get("version", ""),
+        },
     }
 
 

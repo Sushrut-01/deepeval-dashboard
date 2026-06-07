@@ -15,6 +15,8 @@ SLO_TYPES = [
     "metric_pass_rate", "metric_avg_score",
     "latency_p95", "latency_p99",
     "error_rate", "cost_per_run", "pass_rate",
+    # load-test-specific types (auto-filter to test_run_loadtest_* runs only)
+    "loadtest_apdex", "loadtest_failure_rate",
 ]
 
 
@@ -127,14 +129,19 @@ def seed_defaults():
         return {"message": "SLOs already configured", "count": len(existing)}
 
     defaults = [
-        {"name": "Faithfulness Reliability",   "type": "metric_pass_rate",  "metric": "Faithfulness",    "operator": ">=", "target": 0.80, "windowRuns": 10},
-        {"name": "Answer Relevancy Quality",   "type": "metric_pass_rate",  "metric": "AnswerRelevancy", "operator": ">=", "target": 0.75, "windowRuns": 10},
-        {"name": "Hallucination Safety",       "type": "metric_avg_score",  "metric": "Hallucination",   "operator": ">=", "target": 0.85, "windowRuns": 10},
-        {"name": "LLM P95 Latency",           "type": "latency_p95",       "spanType": "llm",           "operator": "<=", "target": 5000, "windowRuns": 10},
-        {"name": "Retrieval P95 Latency",     "type": "latency_p95",       "spanType": "retriever",     "operator": "<=", "target": 2000, "windowRuns": 10},
-        {"name": "Overall Pass Rate",         "type": "pass_rate",                                      "operator": ">=", "target": 0.70, "windowRuns": 10},
-        {"name": "Eval Cost Budget",          "type": "cost_per_run",                                   "operator": "<=", "target": 0.10, "windowRuns": 10},
-        {"name": "Pipeline Error Rate",       "type": "error_rate",                                     "operator": "<=", "target": 0.05, "windowRuns": 10},
+        {"name": "Faithfulness Reliability",   "type": "metric_pass_rate",      "metric": "Faithfulness",    "operator": ">=", "target": 0.80, "windowRuns": 10},
+        {"name": "Answer Relevancy Quality",   "type": "metric_pass_rate",      "metric": "AnswerRelevancy", "operator": ">=", "target": 0.75, "windowRuns": 10},
+        {"name": "Hallucination Safety",       "type": "metric_avg_score",      "metric": "Hallucination",   "operator": ">=", "target": 0.85, "windowRuns": 10},
+        {"name": "LLM P95 Latency",           "type": "latency_p95",           "spanType": "llm",           "operator": "<=", "target": 5000, "windowRuns": 10},
+        {"name": "Retrieval P95 Latency",     "type": "latency_p95",           "spanType": "retriever",     "operator": "<=", "target": 2000, "windowRuns": 10},
+        {"name": "Overall Pass Rate",         "type": "pass_rate",                                          "operator": ">=", "target": 0.70, "windowRuns": 10},
+        {"name": "Eval Cost Budget",          "type": "cost_per_run",                                       "operator": "<=", "target": 0.10, "windowRuns": 10},
+        {"name": "Pipeline Error Rate",       "type": "error_rate",                                         "operator": "<=", "target": 0.05, "windowRuns": 10},
+        # Load test SLOs — auto-filter to test_run_loadtest_* runs
+        {"name": "Load Test P95 Latency",     "type": "latency_p95",           "spanType": "llm",           "operator": "<=", "target": 12000, "windowRuns": 5, "description": "Load test P95 end-to-end latency ≤ 12s (conversational RAG SLA)"},
+        {"name": "Load Test P99 Latency",     "type": "latency_p99",           "spanType": "llm",           "operator": "<=", "target": 15000, "windowRuns": 5, "description": "Load test P99 latency ≤ 15s (worst-case ceiling)"},
+        {"name": "Load Test Apdex",           "type": "loadtest_apdex",                                     "operator": ">=", "target": 0.70, "windowRuns": 5, "description": "Apdex ≥ 0.7 (T=3s): ≥70% of load test requests satisfy or tolerate latency target"},
+        {"name": "Load Test Failure Rate",    "type": "loadtest_failure_rate",                              "operator": "<=", "target": 0.05, "windowRuns": 5, "description": "Load test request failure rate ≤ 5%"},
     ]
     slos = []
     for d in defaults:
