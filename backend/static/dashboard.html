@@ -1147,7 +1147,7 @@ function _HeatmapTab(props){
     "RAGAS":    ["Faithfulness","AnswerRelevancy","ContextPrecision","ContextRecall","ContextRelevance","ResponseGroundedness"],
     "Foundry":  ["Coherence","Fluency","Relevance","Groundedness","Similarity","F1Score","ROUGEScore","BLEUScore","METEORScore","Violence","Sexual","SelfHarm","HateUnfairness"],
     "DSPy":     ["KeywordPresence","FallbackDetection","FormattingConstraints","PDFGrounding","LLMAnswerQuality","CompositeScore"],
-    "DeepEval": ["PlayReadyRelevance","PlayReadyFaithfulness","PlayReadyClarity","AnswerRelevancyMetric","FaithfulnessMetric","HallucinationMetric","PIILeakageMetric","NonAdviceMetric","RoleViolationMetric","PromptAlignmentMetric"],
+    "DeepEval": ["PlayReadyRelevance","PlayReadyFaithfulness","PlayReadyClarity","AnswerRelevancyMetric","FaithfulnessMetric","HallucinationMetric","PIILeakageMetric","NonAdviceMetric","RoleViolationMetric","PromptAlignmentMetric","TopicAdherenceMetric","ConversationCompletenessMetric","KnowledgeRetentionMetric"],
   };
   var visMetrics=mFilt==="all"?presentMetrics:(METRIC_GROUPS[mFilt]||[]).filter(function(m){return presentMetrics.indexOf(m)>=0;});
   if(!visMetrics.length) visMetrics=presentMetrics;
@@ -1923,7 +1923,7 @@ function ComparePage() {
   var allM=[];if(cmp){(cmp||[]).forEach(function(r){Object.keys(r.metrics||{}).forEach(function(k){if(allM.indexOf(k)<0)allM.push(k);});});}
   /* metric filter: show only shared metrics in compare chart when all types selected */
   var _mf=useState("all"),mfCmp=_mf[0],setMfCmp=_mf[1];
-  var METRIC_GROUPS_C={"RAGAS":["Faithfulness","AnswerRelevancy","ContextPrecision","ContextRecall"],"Foundry":["Coherence","Fluency","Relevance","Groundedness","F1Score"],"DSPy":["KeywordPresence","FallbackDetection","FormattingConstraints","CompositeScore"],"DeepEval":["PlayReadyRelevance","PlayReadyFaithfulness","PlayReadyClarity","AnswerRelevancyMetric","FaithfulnessMetric","HallucinationMetric","PIILeakageMetric","NonAdviceMetric","RoleViolationMetric","PromptAlignmentMetric"]};
+  var METRIC_GROUPS_C={"RAGAS":["Faithfulness","AnswerRelevancy","ContextPrecision","ContextRecall"],"Foundry":["Coherence","Fluency","Relevance","Groundedness","F1Score"],"DSPy":["KeywordPresence","FallbackDetection","FormattingConstraints","CompositeScore"],"DeepEval":["PlayReadyRelevance","PlayReadyFaithfulness","PlayReadyClarity","AnswerRelevancyMetric","FaithfulnessMetric","HallucinationMetric","PIILeakageMetric","NonAdviceMetric","RoleViolationMetric","PromptAlignmentMetric","TopicAdherenceMetric","ConversationCompletenessMetric","KnowledgeRetentionMetric"]};
   var visM=mfCmp==="all"?allM:(METRIC_GROUPS_C[mfCmp]||allM).filter(function(m){return allM.indexOf(m)>=0;});
   if(!visM.length)visM=allM;
   var cChart=cmp&&cmp.length&&visM.length?{labels:visM,datasets:(cmp||[]).map(function(r,i){
