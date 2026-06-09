@@ -2075,15 +2075,47 @@ function SessionsPage() {
   var _d=useFetch("/api/sessions",["sess"]),data=_d.data,loading=_d.loading;
   var _sel=useState(null),sel=_sel[0],setSel=_sel[1];
   var _det=useFetch(sel?"/api/sessions/"+sel:null,["sessd",sel]),det=_det.data,dL=_det.loading;
-  return React.createElement(PW,null,React.createElement("div",{style:{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}},
-    React.createElement(SCard,null,React.createElement(SHead,null,"Sessions / Threads"),
-      loading?React.createElement(Loading,null):React.createElement("table",null,React.createElement("thead",null,React.createElement("tr",null,React.createElement("th",null,"Session ID"),React.createElement("th",null,"User"),React.createElement("th",null,"Traces"),React.createElement("th",null,"Last Active"))),
-      React.createElement("tbody",null,(data||[]).map(function(s,i){return React.createElement("tr",{key:i,style:{cursor:"pointer",background:sel===s.sessionId?C.primarySoft:""},onClick:function(){setSel(s.sessionId);}},
-        React.createElement("td",{style:{fontFamily:"monospace",fontSize:11}},s.sessionId&&s.sessionId.slice(0,20)+"..."),React.createElement("td",{style:{fontSize:12}},s.userId||"--"),React.createElement("td",{style:{fontWeight:700}},s.traceCount),React.createElement("td",{style:{fontSize:11,color:C.muted}},(s.lastActive||"").slice(0,16).replace("T"," ")));})),
-      !loading&&!(data&&data.length)&&React.createElement(Empty,{title:"No sessions",sub:"Sessions grouped by threadId in trace data"})
+
+  function labelFor(sid) {
+    var m=sid.match(/-(public|customer|private)$/i);
+    var bot=m?m[1]:"";
+    var dm=sid.match(/(\d{9,})/);
+    var ts=dm?new Date(parseInt(dm[1])*1000).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"";
+    if(bot&&ts) return (bot.charAt(0).toUpperCase()+bot.slice(1))+" — "+ts;
+    if(bot) return bot.charAt(0).toUpperCase()+bot.slice(1)+" run";
+    return sid.length>40?sid.slice(0,40)+"…":sid;
+  }
+
+  return React.createElement(PW,null,
+    React.createElement(SR,null,
+      React.createElement(StatCard,{label:"Evaluation Runs",value:(data||[]).length,icon:"S",grad:C.primaryGrad}),
+      React.createElement(StatCard,{label:"Total Test Cases",value:(data||[]).reduce(function(a,s){return a+(s.traceCount||0);},0),icon:"T",grad:C.tealGrad})
     ),
-    sel&&React.createElement(SCard,null,React.createElement(SHead,{action:React.createElement(Btn,{sm:true,v:"ghost",onClick:function(){setSel(null);}},"X")},"Session Detail"),
-      dL?React.createElement(Loading,null):React.createElement("div",{style:{padding:12}},(det&&det.traces||[]).map(function(tr,i){return React.createElement("div",{key:i,style:{padding:"7px 11px",border:"1px solid "+C.border,borderRadius:8,marginBottom:6,fontSize:12}},React.createElement("div",{style:{fontWeight:600}},tr.testCase),React.createElement("div",{style:{color:C.muted,fontSize:11}},(tr.datetime||"").slice(0,16).replace("T"," ")));})))))
+    loading ? React.createElement(SCard,null,React.createElement(Loading,null)) :
+    !(data&&data.length) ? React.createElement(SCard,null,React.createElement(Empty,{title:"No evaluation runs yet",sub:"Run an evaluation to see results here"})) :
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}},
+      (data||[]).map(function(s,i){
+        var active=sel===s.sessionId;
+        return React.createElement("div",{key:i,
+          style:{background:active?C.primarySoft:C.card,border:"1px solid "+(active?C.primary:C.border),borderRadius:10,padding:"14px 16px",cursor:"pointer",transition:"border 0.15s"},
+          onClick:function(){setSel(active?null:s.sessionId);}},
+          React.createElement("div",{style:{fontWeight:600,fontSize:13,marginBottom:6}},labelFor(s.sessionId)),
+          React.createElement("div",{style:{display:"flex",gap:16}},
+            React.createElement("span",{style:{fontSize:12,color:C.muted}},"Test cases: ",React.createElement("b",{style:{color:C.text}},s.traceCount||0)),
+            React.createElement("span",{style:{fontSize:12,color:C.muted}},"Date: ",React.createElement("b",{style:{color:C.text}},(s.lastActive||"").slice(0,10)||"—"))
+          ),
+          active&&React.createElement("div",{style:{marginTop:10,borderTop:"1px solid "+C.border,paddingTop:8}},
+            dL ? React.createElement(Loading,null) :
+            (det&&det.traces||[]).slice(0,10).map(function(tr,j){
+              return React.createElement("div",{key:j,style:{fontSize:11,padding:"3px 0",color:C.muted,borderBottom:"1px solid "+C.border+"44"}},
+                React.createElement("span",{style:{color:C.text,fontWeight:500}},tr.testCase||"—"),
+                React.createElement("span",{style:{float:"right"}},(tr.datetime||"").slice(0,10))
+              );
+            })
+          )
+        );
+      })
+    )
   );
 }
 
