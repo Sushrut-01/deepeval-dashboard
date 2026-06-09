@@ -21,7 +21,7 @@ def get_all_sessions() -> List[dict]:
             trace = tc.get("trace")
             if not trace:
                 continue
-            thread_id = trace.get("threadId") or f"__notrace_{run['_filename']}_{tc.get('name','')}"
+            thread_id = _resolve_thread_id(trace, run)
             user_id   = trace.get("userId")
             sid = thread_id
 
@@ -43,22 +43,29 @@ def get_all_sessions() -> List[dict]:
 
     result = []
     for sid, s in sessions.items():
-        if not sid.startswith("__notrace_"):
+        if not sid.startswith("__notrace_") and s["traceCount"] > 0:
             result.append({k: v for k, v in s.items() if k != "traces"})
     return sorted(result, key=lambda x: x["lastActive"], reverse=True)
+
+
+def _resolve_thread_id(trace: dict, run: dict) -> str:
+    run_id   = run.get("identifier") or run["_filename"].replace(".json", "")
+    bot_type = (run.get("hyperparameters") or {}).get("bot_type", "")
+    fallback = f"run-{run_id}" + (f"-{bot_type}" if bot_type else "")
+    return trace.get("threadId") or fallback
 
 
 def get_session(session_id: str) -> Optional[dict]:
     for run in get_all_runs():
         for tc in (run.get("testCases") or []):
             trace = tc.get("trace")
-            if trace and trace.get("threadId") == session_id:
+            if trace and _resolve_thread_id(trace, run) == session_id:
                 # Collect all traces in this session
                 traces = []
                 for r in get_all_runs():
                     for t in (r.get("testCases") or []):
                         tr = t.get("trace")
-                        if tr and tr.get("threadId") == session_id:
+                        if tr and _resolve_thread_id(tr, r) == session_id:
                             traces.append({
                                 "traceId":  tr.get("uuid"),
                                 "testCase": t.get("name"),
